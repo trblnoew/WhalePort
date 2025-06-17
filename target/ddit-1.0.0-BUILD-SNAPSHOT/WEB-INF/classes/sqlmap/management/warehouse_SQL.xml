@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+ <mapper namespace="kr.or.ddit.management.partner.warehouse.mapper.IMWarehouseMapper">
+ 	
+ 	<select id="warehouseList" resultType="kr.or.ddit.partner.store.warehouse.vo.WarehouseVO">
+ 		SELECT
+		    pw.WH_NO,
+		    pw.PT_NO,
+		    p.PT_NAME,
+		    pw.WH_PLACENAME,
+		    pw.WH_STARTDATE,
+		    pw.WH_ENDDATE,
+		    pw.WH_DELYN,
+		    pw.WH_YN,
+		    pw.WH_REJECT,
+		    pw.WH_X_COORD,
+		    pw.WH_Y_COORD
+		FROM
+		    partner_warehouse pw
+		LEFT JOIN
+		    partner p ON pw.PT_NO = p.PT_NO
+		ORDER BY
+		    pw.WH_X_COORD ASC
+ 	</select>
+ 	
+ 	<update id="addReject" parameterType="kr.or.ddit.partner.store.warehouse.vo.WarehouseVO">
+ 		update partner_warehouse
+ 		set
+ 			wh_reject = #{whReject},
+ 			wh_yn = 'N'
+ 		where wh_no = #{whNo}
+ 	</update>
+ 	
+ 	<update id="whApprove" parameterType="String">
+ 		update partner_warehouse
+ 		set
+ 			wh_yn = 'Y'
+ 		where wh_no = #{whNo}
+ 	</update>
+ 	
+ </mapper>

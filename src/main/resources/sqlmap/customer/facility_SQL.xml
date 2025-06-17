@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  <mapper namespace="kr.or.ddit.customer.facility.mapper.IFacilityInfoMapper" >
+  
+  	<select id="selectGuideList" resultType="kr.or.ddit.partner.common.account.vo.PartnerVO">
+  		select
+  			PT_NO,    
+  			PT_MONEY,    
+  			PT_NAME,    
+  			PT_STARTDATE,    
+  			PT_ENDDATE,    
+  			PT_BUSNUM,    
+  			PT_ID,    
+  			PT_PW,    
+  			PT_FILECODE,    
+  			PT_IMAGE,    
+  			PT_XPOS,    
+  			PT_YPOS,    
+  			PT_OPENDATE,    
+  			PT_CODE,    
+  			PT_ADD,    
+  			PT_ADD2,    
+  			PT_POSTCODE,    
+  			PT_APPROVAL,    
+  			PT_REJECT,    
+  			PT_MGRNAME,    
+  			PT_MGREMAIL,    
+  			PT_MGRTEL,    
+  			PT_CEO,    
+  			PT_TIME1, 
+  			PT_TIME2,    
+  			PT_DETAIL,    
+  			PT_CATEGORY1,   
+  			PT_CATEGORY2 
+  			from partner   
+  		where PT_CATEGORY1 = 'guide'
+  			
+  	</select>
+  
+  	<select id="selectRestaurantList" resultType="kr.or.ddit.partner.common.account.vo.PartnerVO">
+  		select
+  			PT_NO,    
+  			PT_MONEY,    
+  			PT_NAME,    
+  			PT_STARTDATE,    
+  			PT_ENDDATE,    
+  			PT_BUSNUM,    
+  			PT_ID,    
+  			PT_PW,    
+  			PT_FILECODE,    
+  			PT_IMAGE,    
+  			PT_XPOS,    
+  			PT_YPOS,    
+  			PT_OPENDATE,    
+  			PT_CODE,    
+  			PT_ADD,    
+  			PT_ADD2,    
+  			PT_POSTCODE,    
+  			PT_APPROVAL,    
+  			PT_REJECT,    
+  			PT_MGRNAME,    
+  			PT_MGREMAIL,    
+  			PT_MGRTEL,    
+  			PT_CEO,    
+  			PT_TIME1, 
+  			PT_TIME2,    
+  			PT_DETAIL,    
+  			PT_CATEGORY1,   
+  			PT_CATEGORY2 
+  			from partner   
+  		where PT_CATEGORY1 = 'restaurant'
+  			
+  	</select>
+  
+  	<select id="selectShoppingList" resultType="kr.or.ddit.partner.common.account.vo.PartnerVO">
+  		select
+  			PT_NO,    
+  			PT_MONEY,    
+  			PT_NAME,    
+  			PT_STARTDATE,    
+  			PT_ENDDATE,    
+  			PT_BUSNUM,    
+  			PT_ID,    
+  			PT_PW,    
+  			PT_FILECODE,    
+  			PT_IMAGE,    
+  			PT_XPOS,    
+  			PT_YPOS,    
+  			PT_OPENDATE,    
+  			PT_CODE,    
+  			PT_ADD,    
+  			PT_ADD2,    
+  			PT_POSTCODE,    
+  			PT_APPROVAL,    
+  			PT_REJECT,    
+  			PT_MGRNAME,    
+  			PT_MGREMAIL,    
+  			PT_MGRTEL,    
+  			PT_CEO,    
+  			PT_TIME1, 
+  			PT_TIME2,    
+  			PT_DETAIL,    
+  			PT_CATEGORY1,   
+  			PT_CATEGORY2 
+  			from partner   
+  		where PT_CATEGORY1 = 'shopping'
+  			
+  	</select>
+  
+  </mapper>

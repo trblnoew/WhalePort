@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  <mapper namespace="kr.or.ddit.customer.reserve.hotel.mapper.HotelMapper">
+ 	
+ 	<select id="check" parameterType="kr.or.ddit.customer.reserve.hotel.vo.HotelVO" resultType="int">
+ 		SELECT COUNT(*) 
+        FROM HT_RESERVATION 
+        WHERE 1=1 and
+       		  ht_no = #{htNo} and
+        	  hr_checkin = #{hrCheckin} and
+        	  hr_status = 'Y'
+ 	</select>
+ 	
+ 	
+ 	<select id="list" resultType="kr.or.ddit.customer.reserve.hotel.vo.HotelVO">
+		SELECT
+    		HT_NO, HT_NAME
+		FROM HOTEL
+ 	</select>
+ 	
+ 	
+ 	<insert id="register" parameterType="kr.or.ddit.customer.reserve.hotel.vo.HotelVO">
+ 		INSERT INTO HT_RESERVATION (
+  			HR_NO, HT_NO, HR_NAME, HR_TEL, HR_CHECKIN, HR_COST, HR_DATE, CUS_NO
+		) VALUES (
+		SEQ_HT_RESERVATION.NEXTVAL, #{htNo}, #{hrName}, #{hrTel}, #{hrCheckin}, #{hrCost}, sysdate, #{cusNo})
+ 	</insert>
+ 	
+ 	<select id="select" resultType="kr.or.ddit.customer.reserve.hotel.vo.HotelVO" parameterType="int">
+ 		select HT_NO, HT_NAME 
+ 		FROM HOTEL
+ 		where ht_no = #{htNo}
+ 	
+ 	</select>
+ 	
+
+ 	
+ 	</mapper>

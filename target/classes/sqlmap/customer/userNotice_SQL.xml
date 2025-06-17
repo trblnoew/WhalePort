@@ -1,0 +1,267 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+ <mapper namespace="kr.or.ddit.customer.notice.mapper.IUserNoticeMapper">
+ 
+ 	<resultMap type="kr.or.ddit.customer.notice.vo.UserNoticeVO" id="UserNoticeVO">
+        <result property="noNo" column="no_no" />
+        <result property="noTitle" column="no_title" />
+        <result property="noCategory" column="no_category" />
+        <result property="noContent" column="no_content" />
+        <result property="noCode" column="no_code" />
+        <result property="noFilecode" column="no_filecode" />
+        <result property="empNo" column="emp_no" />
+        <result property="noCount" column="no_count" />
+        <result property="noDelyn" column="no_delyn" />
+        <result property="noDate" column="no_date" />
+        <collection property="noticeFileList" resultMap="fileMap" />
+    </resultMap>
+
+    <sql id="search">
+        <if test="searchWord != null and searchType == 'title'">
+            AND (no_title LIKE '%' || #{searchWord} || '%')
+        </if>
+        <if test="searchWord != null and searchType == 'content'">
+            AND (no_content LIKE '%' || #{searchWord} || '%')
+        </if>
+    </sql>
+
+    <select id="userNoticeList" parameterType="kr.or.ddit.customer.notice.vo.UserNoticeVO" resultType="kr.or.ddit.customer.notice.vo.UserNoticeVO">
+        SELECT 
+            b.*
+        FROM (
+            SELECT 
+                a.*, ROW_NUMBER() OVER (ORDER BY a.no_no DESC) rnum
+            FROM (
+                select
+			 		n.no_no, 
+			 		n.no_category, 
+			 		n.no_title, 
+			 		n.no_content, 
+			 		n.emp_no, 
+			 		e.emp_dept,
+			 		n.no_filecode, 
+			 		n.no_count, 
+			 		n.no_delyn, 
+			 		n.no_date
+			 	from
+			 		notice n
+			 	left join
+			 		employee e ON n.emp_no = e.emp_no
+			 	where n.no_code = 'NTC03' and n.no_delyn = 'N'
+			 	order by n.no_no desc
+                <include refid="search"/>
+            ) a
+        ) b
+        <![CDATA[
+            WHERE b.rnum >= #{startRow} AND b.rnum <= #{endRow}
+        ]]>
+    </select>
+ 	
+ 	<select id="faqList" resultType="kr.or.ddit.customer.notice.vo.UserFAQVO">
+ 		select
+	 		faq_no, faq_category, faq_title, faq_ans, emp_no
+	 	from faq
+	 	order by faq_no desc
+ 	</select>
+ 	
+ 	
+ 	<!-- NOTICE -->
+ 	<select id="noticeList" resultType="kr.or.ddit.customer.notice.vo.UserNoticeVO">
+ 		select
+	 		n.no_no, 
+	 		n.no_category, 
+	 		n.no_title, 
+	 		n.no_content, 
+	 		n.emp_no, 
+	 		e.emp_dept,
+	 		n.no_filecode, 
+	 		n.no_count, 
+	 		n.no_delyn, 
+	 		n.no_date
+	 	from
+	 		notice n
+	 	left join
+	 		employee e ON n.emp_no = e.emp_no
+	 	where n.no_code = 'NTC03' and n.no_delyn = 'N'
+	 	order by n.no_no desc
+ 	</select>
+ 	
+ 	<select id="userNoticeCount" parameterType="kr.or.ddit.customer.notice.vo.UserNoticeVO" resultType="int">
+        SELECT COUNT(no_no)
+        FROM notice
+        WHERE no_code = 'NTC03' AND no_delyn = 'N'
+        <include refid="search"/>
+    </select>
+    
+    <select id="takeNoticeFile" parameterType="int" resultType="kr.or.ddit.util.vo.FileVO">
+	    select
+	        file_no, file_owner, file_savepath, file_size, file_mime, file_realname, file_savename, file_savedate, file_delyn
+	    from file_data
+	    where file_owner like '02' || #{noNo} || '%'
+	</select>
+	
+	<select id="noticeDetail" parameterType="int" resultType="kr.or.ddit.customer.notice.vo.UserNoticeVO">
+        SELECT
+            no_no, no_category, no_title, no_content, emp_no, no_filecode, no_count, no_delyn, no_date
+        FROM notice
+        WHERE no_code = 'NTC03' AND no_delyn = 'N' AND no_no = #{noNo}
+    </select>
+ 	
+ 	<select id="selectUserNotice" parameterType="kr.or.ddit.customer.notice.vo.UserNoticeVO" resultMap="UserNoticeVO">
+			select * from
+                (select
+					NO_NO,
+					NO_TITLE,
+					NO_CATEGORY,
+					NO_CONTENT,
+					NO_CODE,
+					NO_FILECODE,
+					N.EMP_NO,
+					NO_COUNT,
+					NO_DELYN,
+                    EMP_NAME,
+					NO_DATE
+				from NOTICE N, EMPLOYEE E
+				where N.EMP_NO = E.EMP_NO AND NO_CODE = 'NTC03' AND NO_DELYN='N' AND NO_NO=#{noNo}) n left outer join file_data fd
+                on fd.file_owner = #{fileOwner}
+	</select>
+ 	
+ 	<!-- QnA -->
+ 	<resultMap type="kr.or.ddit.customer.notice.vo.UserQnAVO" id="UserQnAVO">
+        <result property="qnaNo" column="QNA_NO" />
+        <result property="cusNo" column="CUS_NO" />
+        <result property="empNo" column="EMP_NO" />
+        <result property="qnaTitle" column="QNA_TITLE" />
+        <result property="qnaContent" column="QNA_CONTENT" />
+        <result property="qnaAns" column="QNA_ANS" />
+        <result property="qnaFilecode" column="QNA_FILECODE" />
+        <result property="qnaCount" column="QNA_COUNT" />
+        <result property="qnaDelyn" column="QNA_DELYN" />
+        <result property="qnaDate" column="QNA_DATE" />
+    </resultMap>
+    
+<!--     <select id="userQnAList" parameterType="kr.or.ddit.customer.notice.vo.UserQnAVO" resultType="kr.or.ddit.customer.notice.vo.UserQnAVO"> -->
+<!--         SELECT  -->
+<!--             b.* -->
+<!--         FROM ( -->
+<!--             SELECT  -->
+<!--                 a.*, ROW_NUMBER() OVER (ORDER BY a.QNA_NO DESC) rnum -->
+<!--             FROM ( -->
+<!--                 SELECT  -->
+<!--                 	QNA_NO, CUS_NO, EMP_NO, QNA_TITLE, QNA_CONTENT, QNA_ANS, QNA_FILECODE, QNA_COUNT, QNA_DELYN, QNA_DATE -->
+<!--                 FROM qna -->
+<!--                 WHERE qna_delyn = 'N' -->
+<!--                 <include refid="search"/> -->
+<!--             ) a -->
+<!--         ) b -->
+<!--         <![CDATA[ -->
+<!--             WHERE b.rnum >= #{startRow} AND b.rnum <= #{endRow} -->
+<!--         ]]> -->
+<!--     </select> -->
+    
+    <select id="userQnAList" parameterType="kr.or.ddit.customer.notice.vo.UserQnAVO" resultType="kr.or.ddit.customer.notice.vo.UserQnAVO">
+        SELECT 
+            b.*
+        FROM (
+            SELECT 
+                a.*, ROW_NUMBER() OVER (ORDER BY a.QNA_NO DESC) rnum
+            FROM (
+                SELECT
+                	CUS.CUS_NAME,
+                	QNA.QNA_NO, QNA.CUS_NO, QNA.EMP_NO, QNA.QNA_TITLE, QNA.QNA_CONTENT, QNA.QNA_ANS, QNA.QNA_FILECODE, QNA.QNA_COUNT, QNA.QNA_DELYN, QNA.QNA_DATE
+                FROM QNA QNA LEFT OUTER JOIN CUSTOMER CUS ON(QNA.CUS_NO = CUS.CUS_NO)
+                WHERE qna_delyn = 'N'
+                <include refid="search"/>
+            ) a
+        ) b
+        <![CDATA[
+            WHERE b.rnum >= #{startRow} AND b.rnum <= #{endRow}
+        ]]>
+    </select>
+    
+    <select id="userQnACount" parameterType="kr.or.ddit.customer.notice.vo.UserQnAVO" resultType="int">
+        SELECT COUNT(qna_no)
+        FROM qna
+        WHERE qna_delyn = 'N'
+        <include refid="search"/>
+    </select>
+    
+    <insert id="qnaRegister" parameterType="kr.or.ddit.customer.notice.vo.UserQnAVO">
+	    <selectKey keyProperty="qnaNo" resultType="int" order="BEFORE">
+	        SELECT seq_qna.NEXTVAL FROM dual
+	    </selectKey>
+	    INSERT INTO qna(
+	        QNA_NO, CUS_NO, QNA_TITLE, QNA_CONTENT, QNA_ANS, QNA_FILECODE, QNA_COUNT, QNA_DELYN, QNA_DATE
+	    ) VALUES (
+	        #{qnaNo}, #{cusNo}, #{qnaTitle}, #{qnaContent}, #{qnaAns}, #{qnaFilecode}, 0, 'N', SYSDATE
+	    )
+	</insert>
+	
+	<select id="qnaDetail" parameterType="int" resultType="kr.or.ddit.customer.notice.vo.UserQnAVO">
+        SELECT
+            qna.qna_no, qna.cus_no, qna.emp_no, qna.qna_title, qna.qna_content, qna.qna_ans, qna.qna_filecode, qna.qna_count, qna.qna_delyn, qna.qna_date, cus.cus_name
+        FROM qna qna, customer cus
+        WHERE qna_delyn = 'N' AND qna_no = #{qnaNo}
+        	and qna.cus_no = cus.cus_no
+    </select>
+	
+	<update id="qnaDelete" parameterType="int">
+        UPDATE qna
+        SET qna_delyn = 'Y'
+        WHERE qna_no = #{qnaNo}
+    </update>
+
+    <update id="qnaUpdate" parameterType="kr.or.ddit.customer.notice.vo.UserQnAVO">
+        UPDATE qna
+        SET qna_title = #{qnaTitle},
+            qna_content = #{qnaContent}
+        WHERE qna_no = #{qnaNo}
+    </update>
+    
+    <update id="userNoticeCounting" parameterType="int">
+		update qna
+		set 
+			qna_count = qna_count+1
+		where qna_no = #{qnaNo}
+	</update>
+    
+    <!-- File 시작 -->
+    <insert id="saveFile" parameterType="kr.or.ddit.util.vo.FileVO">
+    	insert into file_data(
+    		file_no, file_owner, file_savepath, file_size, file_mime, file_realname, file_savename, file_savedate, file_delyn
+    	)values(
+    		seq_file.nextval, #{fileOwner}, #{fileSavepath}, #{fileSize}, #{fileMime}, #{fileRealname}, #{fileSavename}, SYSDATE, 'N' 
+    	)
+    </insert>
+    
+    <select id="takeQnAFile" parameterType="int" resultType="kr.or.ddit.util.vo.FileVO">
+	    select
+	        file_no, file_owner, file_savepath, file_size, file_mime, file_realname, file_savename, file_savedate, file_delyn
+	    from file_data
+	    where file_owner like '04' || #{qnaNo} || '%'
+	</select>
+	
+	<select id="selectCusId" parameterType="int" resultType="String">
+	    	select cus_id from customer where cus_no=#{cusNo}
+	</select>
+	
+ 	
+ 	    <!-- File 시작 -->
+    <resultMap type="kr.or.ddit.util.vo.FileVO" id="fileMap">
+		<id property="fileNo" column="file_no" />
+		<result property="fileNo" column="file_no" />
+		<result property="fileOwner" column="file_owner" />
+		<result property="fileSavepath" column="file_savepath" />
+		<result property="fileSize" column="file_size" />
+		<result property="fileMime" column="file_mime" />
+		<result property="fileRealname" column="file_realname" />
+		<result property="fileSavename" column="file_savename" />
+		<result property="fileSavedate" column="file_savedate" />
+		<result property="fileDelyn" column="file_delyn" />
+		<result property="fileDowncount" column="file_downcount" />
+		<result property="fileFancysize" column="file_fancysize" />
+	</resultMap>  
+ 
+ </mapper>

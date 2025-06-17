@@ -1,0 +1,44 @@
+mainTemplate을 써야 할 경우와 안써야 할 경우를 나눠야 한다.
+html파일을 열었을때 header와 sidebar가 있으면 mainTemplate을 써야한다.
+
+# mainTemplate 쓰는 방법(header와  sidebar가 있는 경우)
+	1. 원하는 폴더에 jsp 파일을 만든다. 그리고 그 안에 page 태그를 제외 나머지를 삭제한다.
+	2. html파일에 <div class="body-wrapper"> 를 찾는다
+	3. <script>를 찾고 그 위의 </div> 태그를 찾아 2번에서 찾는 부분부터 </div>태그까지 복사한 뒤 1번에서 만든 jsp 파일에 붙여넣는다.
+	4. 현재 복사했던 html 파일에 맨 밑에 부분에 있는 <script src=~> 리스트 중에 mainTemplate.jsp 파일에 있는 <script src=~> 에 없는 것이 있다면 복사해서 mainTemplate.jsp에 붙여넣어준다.
+	5. tiles-config.xml 설정하기
+		1) <definition name="common/**" extends="mainTemplate" >
+		2) 	<put-attribute name="content" value="/WEB-INF/views/common/{1}.jsp" />
+		3) </definition>
+		
+		1) controller의 return값이 common으로 시작하는 것을 tilesViewResolver가 먼저 잡겠다는 뜻이다.(servlet-context.xml에서 설정함)
+			common/**이므로 return값이 common/calendar/calendar 일 경우
+		2) /WEB-INF/views/common/{1}.jsp에서 {1}에 부분에 common/의 뒷 부분이 들어간다.
+		2
+		즉, /WEB-INF/views/common/calendar/calendar.jsp 를 열라는 뜻이다.
+		
+		그러므로 본인이 해당하는 jsp 화면을 열기 위해서는 위와 같은 tiles-config.xml 설정이 필요하다.
+		이미 만들어져있는 jsp 파일 (email.jsp)와 controller(EmailController.java)를 참고 하면 된다.
+	6. jsp에 해당하는 controller를 만들고 잘 열리는지 확인한다. 
+
+# mainTemplate 안 쓰는 방법(header, sidebar 없는 경우)
+	1. 원하는 폴더에 jsp 파일을 만든다. 그리고 그 안에 page 태그를 제외 나머지를 삭제한다.
+	2. html 파일 안에 있는 것들을 전부 복사해서 jsp 파일에 붙여넣는다.
+	3. tiles가 설정되면 안되므로 servlet-config.xml에서 설정한 2순위의 ViewResolver가 잡을 수 있도록 controller의 return값을 지정해준다.
+	4. 예시 (tiles 적용하기 전에 했던 원래 방법대로 해주면 된다)
+		LoginCommonController.java
+
+# commit&update 관련
+	1. 매일 학원 등원 하면 update 하여 svn 최신화
+		→ 학원 하원 후 카페나 집에서 코딩한 후 커밋 한 사람들이 있을수도 있기 때문
+	2. 학원 하원 하기 전, commit&update 하여 svn 최신화
+	3. 공통적인 클래스나 jsp[ex) header.jsp, aside.jsp 등등]를 수정할 때는 먼저 단톡으로나 말로 팀원에게 알린 후 작업 시작
+		→ 최소한의 충돌을 위해서
+		
+		
+	
+	
+	
+	
+	
+	

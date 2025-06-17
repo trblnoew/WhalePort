@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  <mapper namespace="kr.or.ddit.common.mypage.mapper.IAttendanceMapper" >
+  
+  	<insert id="insertWorkArrive" parameterType="kr.or.ddit.common.mypage.vo.EmpWorkVO">
+  	<selectKey keyProperty="workNo" resultType="int" order="BEFORE"  >
+			select SEQ_EMP_WORK.nextval from dual
+	</selectKey>
+  	
+  	
+  	insert into emp_work (
+		work_no, emp_no, work_arrive
+	)
+	values( 
+		#{workNo}, #{empNo}, sysdate
+  	)
+  	</insert>
+  	
+  	<select id="selectWorkArrive" parameterType="int" resultType="kr.or.ddit.common.mypage.vo.EmpWorkVO">
+  		select EMP_NO, WORK_ARRIVE, WORK_LEAVE, WORK_LATE, WORK_EARLY, WORK_OFF, WORK_NOCHK, WORK_NORMAL, WORK_TIME from emp_work
+		where work_no =#{workNo}
+  	
+  	</select>
+  	
+  	
+  	<update id="insertWorkLeave" parameterType="kr.or.ddit.common.mypage.vo.EmpWorkVO">
+    UPDATE emp_work
+    SET 
+    	WORK_LEAVE = sysdate,
+		WORK_LATE = #{workLate},
+		WORK_EARLY= #{workEarly},
+		WORK_OFF = #{workOff},
+		WORK_NOCHK = #{workNochk},
+		WORK_NORMAL = #{workNormal},
+		WORK_TIME = #{workTime},
+		WORK_ALL = #{workAll}
+    WHERE WORK_NO= #{workNo} and EMP_NO= #{empNo}
+  	</update>
+  	
+
+
+<!--   	<update id="insertWorkArrive" parameterType="kr.or.ddit.common.mypage.vo.EmpWorkVO"> -->
+<!--   	UPDATE emp_work -->
+<!--   	set -->
+<!-- 		WORK_ARRIVE = #{workArrive} -->
+<!--   	WHERE WORK_NO= #{workNo} and EMP_NO= #{empNo} -->
+<!--   	</update> -->
+  	
+  	
+<!--   	<select id="selectWorkNo" parameterType="int" resultType="String" > -->
+<!--         select WORK_NO from emp_work where emp_no=#{empNo} and work_no =(select max(work_no) from emp_work) -->
+<!--   	</select> -->
+  	
+  	<!-- 
+  	// 직원 근태 현황 조회
+	public EmpWorkVO selectEmpWork(LoginCommonVO loginCommonVO)
+  	 -->
+  	<select id="selectEmpWork" parameterType="kr.or.ddit.common.login.vo.LoginCommonVO"
+  		 resultType="kr.or.ddit.common.mypage.vo.EmpWorkVO">
+	  	WITH T AS(
+            select ROW_NUMBER() OVER(ORDER BY WORK_ARRIVE ASC) RNUM
+                 , WORK_NO, EMP_NO, WORK_ARRIVE, WORK_LEAVE, WORK_LATE, WORK_EARLY, WORK_OFF, WORK_NOCHK, WORK_NORMAL, WORK_TIME, TODAY_TIME 
+                 , TO_CHAR(WORK_ARRIVE,'YYYY-MM-DD') RSLT
+                 , TO_CHAR(SYSDATE,'YYYY-MM-DD') RSLT2
+            from emp_work
+            where EMP_NO = #{empNo}
+            and TO_CHAR(WORK_ARRIVE,'YYYY-MM-DD') =  TO_CHAR(SYSDATE,'YYYY-MM-DD')
+        )
+        SELECT * FROM T
+        WHERE T.RNUM = 1
+  	</select>
+  	
+<!--   	<update id="inputAttendance" parameterType="kr.or.ddit.common.mypage.vo.EmpWorkVO" > -->
+  	
+<!--     UPDATE emp_work -->
+<!--     SET  -->
+<!--     WORK_LATE = #{workLate}, -->
+<!-- 	WORK_EARLY = #{workEarly}, -->
+<!-- 	WORK_NORMAL = #{workNormal} -->
+<!--     WHERE WORK_NO=#{workNo} and EMP_NO=#{empNo} -->
+  	
+<!--   	</update> -->
+  	
+  	
+<!--   	<insert id="insertWorkToday" parameterType="kr.or.ddit.common.mypage.vo.EmpWorkVO"> -->
+<!-- 	  	insert into emp_work ( -->
+<!-- 			work_no, emp_no, WORK_TODAY -->
+<!-- 		) -->
+<!-- 		values(  -->
+<!-- 			seq_emp_work.nextval, #{empNo}, #{workToday} -->
+<!-- 	  	) -->
+  	
+<!--   	</insert> -->
+  	
+<!--   	<select id="selectWorkToday" parameterType="int" resultType="kr.or.ddit.common.mypage.vo.EmpWorkVO"> -->
+<!--   		select WORK_NO, WORK_ARRIVE, WORK_LEAVE, WORK_LATE, WORK_EARLY, WORK_OFF, WORK_NOCHK, WORK_NORMAL, WORK_TIME, WORK_TODAY  -->
+<!--   		from emp_work where emp_no=#{empNo} and work_no =(select max(work_no) from emp_work) -->
+<!--   	</select> -->
+  
+  
+  <select id="attendanceMonth" parameterType="kr.or.ddit.common.mypage.vo.EmpWorkVO" resultType="kr.or.ddit.common.mypage.vo.EmpWorkVO">
+	  select
+	  	WORK_NO,
+		EMP_NO,
+		WORK_ARRIVE,
+		WORK_LEAVE,
+		WORK_LATE,
+		WORK_EARLY,
+		WORK_OFF,
+		WORK_NOCHK,
+		WORK_NORMAL,
+		WORK_TIME,
+		WORK_ALL
+	  from emp_work where emp_no=#{empNo} and work_arrive like '%'||#{month}||'%'
+	  order by work_arrive desc
+  </select>
+  
+  <select id="attendanceMonth1" parameterType="kr.or.ddit.common.mypage.vo.EmpWorkVO" resultType="kr.or.ddit.common.mypage.vo.EmpWorkVO">
+	select sum(WORK_LATE) as sumWorkLate, sum(WORK_EARLY) as sumWorkEarly, sum(WORK_OFF) as sumWorkOff, sum(WORK_NOCHK) as sumWorkNochk, sum(WORK_NORMAL) as sumWorkNormal 
+	  	from emp_work where emp_no=#{empNo} and work_arrive between #{date1} and #{date2}
+  </select>
+  
+  <select id="attendanceMonth2" parameterType="kr.or.ddit.common.mypage.vo.EmpWorkVO" resultType="kr.or.ddit.common.mypage.vo.EmpWorkVO">
+	select sum(WORK_LATE) as sumWorkLate, sum(WORK_EARLY) as sumWorkEarly, sum(WORK_OFF) as sumWorkOff, sum(WORK_NOCHK) as sumWorkNochk, sum(WORK_NORMAL) as sumWorkNormal 
+	  	from emp_work where emp_no=#{empNo} and work_arrive between #{date1} and #{date2}
+  </select>
+  
+  <select id="attendanceMonth3" parameterType="kr.or.ddit.common.mypage.vo.EmpWorkVO" resultType="kr.or.ddit.common.mypage.vo.EmpWorkVO">
+	select sum(WORK_LATE) as sumWorkLate, sum(WORK_EARLY) as sumWorkEarly, sum(WORK_OFF) as sumWorkOff, sum(WORK_NOCHK) as sumWorkNochk, sum(WORK_NORMAL) as sumWorkNormal 
+	  	from emp_work where emp_no=#{empNo} and work_arrive between #{date1} and #{date2}
+  </select>
+  
+  <select id="attendanceMonth4" parameterType="kr.or.ddit.common.mypage.vo.EmpWorkVO" resultType="kr.or.ddit.common.mypage.vo.EmpWorkVO">
+	select sum(WORK_LATE) as sumWorkLate, sum(WORK_EARLY) as sumWorkEarly, sum(WORK_OFF) as sumWorkOff, sum(WORK_NOCHK) as sumWorkNochk, sum(WORK_NORMAL) as sumWorkNormal 
+	  	from emp_work where emp_no=#{empNo} and work_arrive between #{date1} and #{date2}
+  </select>
+  
+  <select id="attendanceMonth5" parameterType="kr.or.ddit.common.mypage.vo.EmpWorkVO" resultType="kr.or.ddit.common.mypage.vo.EmpWorkVO">
+	select sum(WORK_LATE) as sumWorkLate, sum(WORK_EARLY) as sumWorkEarly, sum(WORK_OFF) as sumWorkOff, sum(WORK_NOCHK) as sumWorkNochk, sum(WORK_NORMAL) as sumWorkNormal 
+	  	from emp_work where emp_no=#{empNo} and work_arrive between #{date1} and #{date2}
+  </select>
+  
+  <select id="attendanceMonthDetail" parameterType="kr.or.ddit.common.mypage.vo.EmpWorkVO" resultType="kr.or.ddit.common.mypage.vo.EmpWorkVO">
+	  select
+	        WORK_NO,
+	        EMP_NO,
+	        WORK_ARRIVE,
+	        WORK_LEAVE,
+	        WORK_LATE,
+	        WORK_EARLY,
+	        WORK_OFF,
+	        WORK_NOCHK,
+	        WORK_NORMAL,
+	        WORK_TIME,
+	        WORK_ALL
+	    from emp_work
+	    where emp_no=#{empNo} and work_arrive between #{date1} and #{date2}
+	    order by work_arrive asc
+ </select>
+ 
+ <update id="insertTodayTime" parameterType="kr.or.ddit.common.mypage.vo.EmpWorkVO">
+ 	UPDATE emp_work
+	SET
+	    TODAY_TIME =  #{todayTime}
+	where WORK_NO= #{workNo}
+ 
+ </update>
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  </mapper>

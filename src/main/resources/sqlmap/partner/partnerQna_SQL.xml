@@ -1,0 +1,282 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+ <mapper namespace="kr.or.ddit.partner.common.qna.mapper.PartnerQnaMapper">
+  
+  	 <resultMap type="kr.or.ddit.partner.common.qna.vo.PartnerQnaVO" id="partnerQnaMap">
+		<result property="qnaNo" column="qna_no" />
+		<result property="ptNo" column="pt_no" />
+		<result property="qnaTitle" column="qna_title" />
+		<result property="qnaContent" column="qna_content" />
+		<result property="qnaAns" column="qna_ans" />
+		<result property="ansFilecode" column="ans_filecode" />
+		<result property="queFilecode" column="que_filecode" />
+		<result property="qnaDate" column="qna_date" />
+		<result property="qnaState" column="qna_state" />
+		<result property="qnaCount" column="qna_count" />
+		<result property="qnaDelyn" column="qna_delyn" />
+		<result property="comdName" column="comd_name" />
+		<result property="ptName" column="pt_name" />
+		<collection property="qnaFileList" resultMap="fileMap"/>
+  	 </resultMap>
+  	 
+  	 <resultMap type="kr.or.ddit.util.vo.FileVO" id="fileMap">
+  	 	<id property="fileNo" column="file_no" />
+		<result property="fileNo" column="file_no" />
+		<result property="fileOwner" column="file_owner" />
+		<result property="fileSavepath" column="file_savepath" />
+		<result property="fileSize" column="file_size" />
+		<result property="fileMime" column="file_mime" />
+		<result property="fileRealname" column="file_realname" />
+		<result property="fileSavename" column="file_savename" />
+		<result property="fileSavedate" column="file_savedate" />
+		<result property="fileDelyn" column="file_delyn" />
+		<result property="fileDowncount" column="file_downcount" />
+		<result property="fileFancysize" column="file_fancysize" />
+  	 </resultMap>
+  
+    <sql id="search">
+      <if test="searchWord != null and searchWord != ''">
+        and (
+        	qna_title like '%' || #{searchWord} || '%' or
+        	qna_content like '%' || #{searchWord} || '%'
+        	)
+     </if>
+     <if test="selectedItem != null">
+	    	and (
+	    		qna_state = #{selectedItem}
+	    	)
+	 </if>
+    </sql>
+    
+    <select id="qnaList" parameterType="kr.or.ddit.util.vo.PaginationVO" resultType="kr.or.ddit.partner.common.qna.vo.PartnerQnaVO">
+        SELECT 
+            b.*
+        FROM (
+            SELECT 
+                a.*, row_number() over(order by a.qna_no desc) rnum
+            FROM (
+                SELECT 
+					CDC.COMD_NAME, 
+                    QNA.QNA_NO, QNA.QNA_TITLE, QNA.QNA_CONTENT, QNA.QNA_DATE, QNA.QNA_STATE, QNA.QUE_FILECODE, QNA.QNA_DELYN,
+                    PT.PT_NAME
+				FROM PARTNER_QNA QNA LEFT OUTER JOIN PARTNER PT ON(QNA.PT_NO = PT.PT_NO)
+                                     LEFT OUTER JOIN COMMON_DETAIL_CODE CDC ON(PT.PT_CODE = CDC.COMD_CODE)
+                WHERE 1=1
+                AND QNA_DELYN = 'N'
+                <include refid="search"/>
+                ORDER BY QNA.QNA_NO DESC
+            ) a
+        ) b
+        <![CDATA[
+            WHERE b.rnum >= #{startRow} AND b.rnum <= #{endRow}
+        ]]>
+    </select>
+    
+    <select id="qnaList2" parameterType="kr.or.ddit.util.vo.PaginationVO" resultType="kr.or.ddit.partner.common.qna.vo.PartnerQnaVO">
+        SELECT 
+            b.*
+        FROM (
+            SELECT 
+                a.*, row_number() over(order by a.qna_no desc) rnum
+            FROM (
+                SELECT 
+					CDC.COMD_NAME, 
+                    QNA.QNA_NO, QNA.QNA_TITLE, QNA.QNA_CONTENT, QNA.QNA_DATE, QNA.QNA_STATE, QNA.QUE_FILECODE, QNA.QNA_DELYN,
+                    PT.PT_NAME
+				FROM PARTNER_QNA QNA LEFT OUTER JOIN PARTNER PT ON(QNA.PT_NO = PT.PT_NO)
+                                     LEFT OUTER JOIN COMMON_DETAIL_CODE CDC ON(PT.PT_CODE = CDC.COMD_CODE)
+                WHERE 1=1
+                <include refid="search"/>
+                ORDER BY QNA.QNA_NO DESC
+            ) a
+        ) b
+        <![CDATA[
+            WHERE b.rnum >= #{startRow} AND b.rnum <= #{endRow}
+        ]]>
+    </select>
+     
+    <select id="qnaCount" parameterType="kr.or.ddit.util.vo.PaginationVO" resultType="int">
+    	SELECT COUNT(QNA_NO)
+        FROM PARTNER_QNA
+        WHERE QNA_DELYN = 'N'
+        <include refid="search"/>
+    </select>
+    
+ 	<insert id="register" parameterType="kr.or.ddit.partner.common.qna.vo.PartnerQnaVO" useGeneratedKeys="true">
+ 		<selectKey keyProperty="qnaNo" resultType="int" order="BEFORE"  >
+			select SEQ_PARTNER_QNA.NEXTVAL from dual
+		</selectKey>
+ 		INSERT INTO PARTNER_QNA(
+ 			QNA_NO, PT_NO, QNA_TITLE, QNA_CONTENT, QUE_FILECODE, QNA_DATE, QNA_STATE, QNA_COUNT, QNA_DELYN 
+ 		)VALUES(
+ 			#{qnaNo}, #{ptNo}, #{qnaTitle}, #{qnaContent}, #{queFilecode}, SYSDATE, 'N', 0, 'N'
+ 		)
+ 	</insert>
+ 	 
+ 	 <insert id="insertQnaFile" parameterType="kr.or.ddit.util.vo.FileVO">
+ 	 	<selectKey keyProperty="fileNo" resultType="int" order="BEFORE">
+	 		select SEQ_FILE.nextval from dual
+	 	</selectKey>
+   		  insert into FILE_DATA(
+		  	FILE_NO,
+			FILE_OWNER,
+			FILE_SAVEPATH, 
+			FILE_SIZE,
+			FILE_MIME,
+			FILE_REALNAME,
+			FILE_SAVENAME,
+			FILE_SAVEDATE,
+			FILE_DELYN,
+			FILE_DOWNCOUNT,
+			FILE_FANCYSIZE
+		  )VALUES(
+		  	#{fileNo},
+			#{fileOwner},
+			#{fileSavepath},
+			#{fileSize},
+			#{fileMime},
+			#{fileRealname},
+			#{fileSavename},
+			sysdate,
+			'N',
+			0,
+			#{fileFancysize}
+		  
+		  )
+	  </insert>
+ 	
+ 	<select id="detail" parameterType="kr.or.ddit.partner.common.qna.vo.PartnerQnaVO" resultMap="partnerQnaMap">
+			SELECT * FROM
+               (SELECT
+				CDC.COMD_NAME, QNA.QNA_NO, QNA.QNA_TITLE, QNA.QNA_CONTENT, PT.PT_NAME, QNA.QNA_DATE, QNA.QNA_STATE, QNA.QUE_FILECODE, QNA.QNA_ANS, QNA.PT_NO
+			FROM PARTNER PT, PARTNER_QNA QNA, COMMON_DETAIL_CODE CDC
+			WHERE PT.PT_NO = QNA.PT_NO
+			AND PT.PT_CODE = CDC.COMD_CODE
+			AND QNA_DELYN = 'N'
+			AND QNA.QNA_NO = #{qnaNo}) N LEFT OUTER JOIN FILE_DATA FD
+			ON FD.FILE_OWNER = #{fileOwner}
+ 	</select>
+ 	
+ 	<select id="detail2" parameterType="kr.or.ddit.partner.common.qna.vo.PartnerQnaVO" resultMap="partnerQnaMap">
+			SELECT * FROM
+               (SELECT
+				CDC.COMD_NAME, QNA.QNA_NO, QNA.QNA_TITLE, QNA.QNA_CONTENT, PT.PT_NAME, QNA.QNA_DATE, QNA.QNA_STATE, QNA.QUE_FILECODE, QNA.QNA_ANS, QNA.PT_NO, QNA.QNA_DELYN
+			FROM PARTNER PT, PARTNER_QNA QNA, COMMON_DETAIL_CODE CDC
+			WHERE PT.PT_NO = QNA.PT_NO
+			AND PT.PT_CODE = CDC.COMD_CODE
+			AND QNA.QNA_NO = #{qnaNo}) N LEFT OUTER JOIN FILE_DATA FD
+			ON FD.FILE_OWNER = #{fileOwner}
+ 	</select>
+ 	
+ 	<update id="update" parameterType="kr.or.ddit.partner.common.qna.vo.PartnerQnaVO">
+ 		UPDATE PARTNER_QNA
+ 		SET 
+ 			QNA_TITLE = #{qnaTitle},
+ 			QNA_CONTENT = #{qnaContent},
+ 			QUE_FILECODE = #{queFilecode},
+ 			QNA_DATE = sysdate
+ 		WHERE QNA_NO = #{qnaNo}
+ 		AND QNA_DELYN = 'N'
+ 	</update>
+ 	
+ 	<delete id="delete" parameterType="int">
+		UPDATE PARTNER_QNA
+		SET 
+			QNA_DELYN='Y'
+		WHERE QNA_NO = #{qnaNo}
+ 	</delete>
+ 	
+      <select id="qnaDownload" parameterType="int" resultType="kr.or.ddit.util.vo.FileVO">
+		SELECT 
+		  	FILE_NO,
+			FILE_OWNER,
+			FILE_SAVEPATH,
+			FILE_SIZE,
+			FILE_MIME,
+			FILE_REALNAME,
+			FILE_SAVENAME,
+			FILE_SAVEDATE,
+			FILE_DELYN,
+			FILE_DOWNCOUNT,
+			FILE_FANCYSIZE
+		FROM FILE_DATA
+	  	WHERE FILE_NO = #{fileNo}
+	  </select>
+	  
+	  <update id="incrementQnaFileDown" parameterType="int">
+	  	UPDATE FILE_DATA
+	  	SET
+	  		FILE_DOWNCOUNT = FILE_DOWNCOUNT+1
+	  	WHERE FILE_NO = #{fileNo}
+	  </update>
+	  
+	  <select id="selectQnaFile" parameterType="int" resultType="kr.or.ddit.util.vo.FileVO">
+	  	select
+			FILE_OWNER,
+			FILE_SAVEPATH,
+			FILE_SIZE,
+			FILE_MIME,
+			FILE_REALNAME,
+			FILE_SAVENAME,
+			FILE_SAVEDATE,
+			FILE_DELYN,
+			FILE_DOWNCOUNT,
+			FILE_FANCYSIZE
+		FROM FILE_DATA
+		WHERE FILE_NO = #{fileNo}
+	  </select>
+	  
+	  <delete id="deleteQnaFile" parameterType="int">
+	  	DELETE FROM FILE_DATA
+	  	WHERE FILE_NO = #{fileNo}
+	  </delete>
+	  
+	  <update id="answer" parameterType="kr.or.ddit.partner.common.qna.vo.PartnerQnaVO">
+ 		UPDATE PARTNER_QNA
+ 		SET 
+ 			QNA_ANS = #{qnaAns},
+ 			QNA_STATE = 'Y'
+ 		WHERE QNA_NO = #{qnaNo}
+ 		AND QNA_DELYN = 'N'
+ 	 </update>
+ 	 
+ 	 <select id="faqList" resultType="kr.or.ddit.partner.common.qna.vo.PartnerFaqVO">
+		SELECT 
+		    FAQ_NO, FAQ_TITLE, FAQ_ANS, FAQ_CATEGORY, FAQ_DELYN 
+		FROM PARTNER_FAQ
+		WHERE FAQ_DELYN = 'N'
+		ORDER BY FAQ_NO
+    </select> 
+ 	 
+ 	<insert id="faqRegister" parameterType="kr.or.ddit.partner.common.qna.vo.PartnerFaqVO" useGeneratedKeys="true">
+ 		<selectKey keyProperty="faqNo" resultType="int" order="BEFORE"  >
+			select SEQ_PARTNER_FAQ.NEXTVAL from dual
+		</selectKey>
+ 		INSERT INTO PARTNER_FAQ(
+ 			FAQ_NO, FAQ_TITLE, FAQ_ANS, FAQ_CATEGORY, FAQ_DELYN 
+ 		)VALUES(
+ 			#{faqNo}, #{faqTitle}, #{faqAns}, #{faqCategory}, 'N'
+ 		)
+ 	</insert>
+ 	
+ 	<update id="faqDelete" parameterType="int">
+		UPDATE PARTNER_FAQ
+		SET 
+			FAQ_DELYN='Y'
+		WHERE FAQ_NO = #{faqNo}
+ 	</update>
+ 	
+ 	<update id="faqUpdate" parameterType="kr.or.ddit.partner.common.qna.vo.PartnerFaqVO">
+		UPDATE PARTNER_FAQ
+		SET 
+			FAQ_TITLE=#{faqTitle},
+			FAQ_ANS=#{faqAns},
+			FAQ_CATEGORY=#{faqCategory}
+		WHERE FAQ_NO = #{faqNo}
+		AND FAQ_DELYN = 'N'
+ 	</update>
+
+ 	
+</mapper>

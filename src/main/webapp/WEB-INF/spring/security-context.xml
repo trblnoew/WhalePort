@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	   xmlns:security="http://www.springframework.org/schema/security"
+	   xsi:schemaLocation="http://www.springframework.org/schema/security http://www.springframework.org/schema/security/spring-security.xsd
+						   http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+	
+	<!-- 사용자 정의 접근 거부 처리자 -->
+	<bean id="customAccessDenied" class="kr.or.ddit.util.security.CustomAccessDeniedHandler"></bean>
+	
+	<!-- 로그인 성공 처리자 -->
+	<bean id="customLoginSuccess" class="kr.or.ddit.util.security.CustomLoginSuccessHandler"></bean>
+	
+	<!-- 로그아웃 성공 처리자 -->
+	<bean id="customLogoutSuccess" class="kr.or.ddit.util.security.CustomLogoutSuccessHandler"></bean>
+	
+	<!-- 사용자 테이블을 이용한 인증/인가 ::: 비밀번호 암호화 처리기 사용 -->
+	<bean id="bcryptPasswordEncoder" class="org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder"></bean>
+	
+	<!-- CustomUserDetailsService 재정의 -->
+	<bean id="customUserDetailsService" class="kr.or.ddit.util.security.CustomUserDetailsService"></bean>
+	
+	<security:http>
+		<security:form-login login-page="/common/login" authentication-success-handler-ref="customLoginSuccess" />
+		<security:access-denied-handler ref="customAccessDenied"/>
+		<security:remember-me data-source-ref="dataSource" token-validity-seconds="604800"/>
+			<security:logout logout-url="/logout" invalidate-session="true" success-handler-ref="customLogoutSuccess"
+				delete-cookies="remember-me, JSESSION_ID"/>
+		<security:csrf disabled="true"/>
+	</security:http>
+	
+	<security:authentication-manager>
+		<security:authentication-provider user-service-ref="customUserDetailsService">
+				<security:password-encoder ref="bcryptPasswordEncoder"/>
+		</security:authentication-provider>
+	</security:authentication-manager>
+</beans>

@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.customer.airport.airportReserve.mapper.AirportReserveServiceMapper">
+	
+	<select id="codeList" resultType="kr.or.ddit.customer.airport.airportReserve.vo.IATACodeVO">
+		select ic_code, ic_kr, ic_country
+		from iata_code
+	</select>
+	
+	<select id="searchList" parameterType="kr.or.ddit.customer.airport.airportReserve.vo.PlaneScheduleVO" resultType="kr.or.ddit.customer.airport.airportReserve.vo.PlaneScheduleVO">
+    SELECT sc_no, sc_airfln, sc_airline, SC_BOARDING, SC_ARRIVED, SC_CITY, SC_LINE, SC_STDATE, SC_STD, SC_GATE, SC_CHECKIN, SC_SEATQTY, SC_PRICE, SC_IMAGE
+	FROM plane_schedule
+	WHERE 1=1
+	  AND sc_boarding = #{scBoarding}
+	  AND sc_arrived = #{scArrived}
+	  AND TRUNC(sc_stdate) = #{scStdate}
+	ORDER BY sc_stdate ASC
+	</select>
+
+	<select id="tkInfoOne" parameterType="int" resultType="kr.or.ddit.customer.airport.airportReserve.vo.TicketingVO">
+		select tk_no, cus_no, tk_flight, tk_seat 
+		from ticketing
+		where tk_flight = #{scNo}
+	</select>
+	
+	<select id="payment" parameterType="kr.or.ddit.customer.airport.airportReserve.vo.PlaneScheduleVO" resultType="kr.or.ddit.customer.airport.airportReserve.vo.PlaneScheduleVO">
+		select sc_no, sc_airfln, sc_airline, SC_BOARDING, SC_ARRIVED, SC_CITY, SC_LINE, SC_STDATE, SC_STD, SC_GATE, SC_CHECKIN, SC_SEATQTY, SC_PRICE
+		from plane_schedule
+		where sc_no = #{scNo} or sc_no = #{scNo2}
+	</select>
+	
+	
+	<insert id="insertTicket" parameterType="kr.or.ddit.customer.airport.airportReserve.vo.TicketingVO">
+		insert into ticketing(
+		    tk_no, cus_no, tk_flight, tk_seat, tk_depart, tk_departdate, tk_arrival, tk_arridate, tk_passport, tk_price, tk_engfirst, tk_lastname, tk_weight, tk_tel, tk_email, tk_birth, tk_gender, tk_group, TK_DATE, TK_KRNAME
+		)
+		values (
+		    seq_ticketing.nextval, #{cusNo}, #{tkFlight}, #{tkSeat}, #{tkDepart}, TO_DATE(#{tkDepartdate}, 'YYYY-MM-DD HH24:MI:SS'), #{tkArrival}, TO_DATE(#{tkArridate}, 'YYYY-MM-DD HH24:MI:SS'), #{tkPassport}, #{tkPrice}, #{tkEngfirst}, #{tkLastname}, #{tkWeight}, #{tkTel}, #{tkEmail}, TO_DATE(#{tkBirth}, 'YYYY-MM-DD'), #{tkGender}, #{tkGroup}, SYSDATE, #{tkKrname}
+		)
+	
+	</insert>
+</mapper>

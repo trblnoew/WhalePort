@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+ <mapper namespace="kr.or.ddit.partner.store.warehouse.mapper.IPWarehouseMapper">
+ 	
+ 	<select id="list" parameterType="string" resultType="kr.or.ddit.partner.store.warehouse.vo.WarehouseStockVO">
+	 	select
+	 		ws_no, ws_image, ws_name, ws_qty, ws_date, ws_unit, ws_detail
+	 	from warehouse_stock
+	 	where wh_no = #{whNo} and ws_delyn = 'N'
+	 	order by ws_no desc
+ 	</select>
+ 	
+ 	<select id="detail" parameterType="string" resultType="kr.or.ddit.partner.store.warehouse.vo.WarehouseStockVO">
+ 		select
+	 		ws_no, ws_image, ws_name, ws_qty, ws_date, ws_detail
+	 	from warehouse_stock
+	 	where ws_no = #{wsNo} and ws_delyn = 'N'
+ 	</select>
+ 	
+ 	<select id="warehouseList" resultType="kr.or.ddit.partner.store.warehouse.vo.WarehouseVO">
+ 		SELECT
+		    pw.WH_NO,
+		    pw.PT_NO,
+		    p.PT_NAME,
+		    pw.WH_PLACENAME,
+		    pw.WH_STARTDATE,
+		    pw.WH_ENDDATE,
+		    pw.WH_DELYN,
+		    pw.WH_YN,
+		    pw.WH_REJECT,
+		    pw.WH_X_COORD,
+		    pw.WH_Y_COORD
+		FROM
+		    partner_warehouse pw
+		LEFT JOIN
+		    partner p ON pw.PT_NO = p.PT_NO
+		ORDER BY
+		    pw.WH_X_COORD ASC
+ 	</select>
+ 	
+ 	<update id="stockDelete" parameterType="String">
+ 		update warehouse_stock
+ 			set ws_delyn = 'Y'
+ 		where ws_no = #{wsNo}
+ 	</update>
+ 	
+ 	<insert id="addStock" parameterType="kr.or.ddit.partner.store.warehouse.vo.WarehouseStockVO" useGeneratedKeys="true">
+		<selectKey keyProperty="wsNo" resultType="int" order="BEFORE">
+			select SEQ_WAREHOUSE_STOCK.nextval from dual
+		</selectKey>
+			insert into warehouse_stock(
+				WS_NO,
+				WH_NO,
+				WS_NAME,
+				WS_QTY,
+				WS_DATE,
+				WS_DETAIL,
+				WS_IMAGE,
+				WS_UNIT,
+				WS_DELYN
+			) values (
+				#{wsNo},
+				#{whNo},
+				#{wsName},
+				#{wsQty},
+				#{wsDate},
+				#{wsDetail},
+				#{wsImage},
+				#{wsUnit},
+				'N'
+			)
+ 	</insert>
+ 	
+ 	<update id="editStock" parameterType="kr.or.ddit.partner.store.warehouse.vo.WarehouseStockVO">
+ 		update warehouse_stock
+ 		<set>
+ 			<if test="wsImage != null">
+				WS_IMAGE = #{wsImage},
+ 			</if>
+			WS_NAME = #{wsName},
+			WS_QTY = #{wsQty},
+			WS_DATE = #{wsDate},
+			WS_DETAIL = #{wsDetail},
+			WS_UNIT = #{wsUnit}
+ 		</set>
+		where WS_NO = #{wsNo}			
+ 	</update>
+ 	
+ 	<!-- 창고 신청 부분 -->
+ 	
+ 	<update id="subWarehouse" parameterType="kr.or.ddit.partner.store.warehouse.vo.WarehouseVO">
+ 		update partner_warehouse
+ 		set 
+ 			pt_no = #{ptNo},
+ 			wh_enddate = #{whEnddate},
+ 			wh_startdate = #{whStartdate},
+ 			wh_yn = 'D'
+ 		where wh_no = #{whNo}
+ 	</update>
+ 	
+ 
+ </mapper>

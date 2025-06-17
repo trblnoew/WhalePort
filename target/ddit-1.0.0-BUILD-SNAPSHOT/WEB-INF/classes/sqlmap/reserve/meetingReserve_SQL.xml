@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  <mapper namespace="kr.or.ddit.customer.reserve.meeting.mapper.MeetingMapper">
+ 	
+ 	<select id="list" resultType="kr.or.ddit.customer.reserve.meeting.vo.MeetingVO">
+		SELECT 
+			MR_NO, MR_NAME, MR_COST
+		FROM MEETING_ROOM
+ 	</select>
+ 	
+ 	<insert id="register" parameterType="kr.or.ddit.customer.reserve.meeting.vo.MeetingVO">
+ 		INSERT INTO MR_RESERVATION (
+  			MRR_NO, MR_NO, MRR_NAME, MRR_TEL, MRR_TIME, MRR_DATE, CUS_NO, MRR_COST
+		) VALUES (
+		SEQ_HT_RESERVATION.NEXTVAL, #{mrNo}, #{mrrName}, #{mrrTel}, #{mrrTime}, #{mrrDate}, #{cusNo}, #{mrrCost})
+ 	</insert>
+ 	
+ 	<select id="select" resultType="kr.or.ddit.customer.reserve.meeting.vo.MeetingVO" parameterType="int">
+ 		select MR_NO, MR_NAME, MR_COST
+ 		FROM MEETING_ROOM
+ 		where mr_no = #{mrNo}
+ 	
+ 	</select>
+ 	
+ 	<select id="check" parameterType="kr.or.ddit.customer.reserve.meeting.vo.MeetingVO" resultType="kr.or.ddit.customer.reserve.meeting.vo.MeetingVO">
+ 		
+        SELECT mrr_time, mr_no
+        FROM MR_RESERVATION 
+        WHERE mr_no = #{mrNo}
+          AND mrr_date = #{mrrDate}
+
+ 	</select>
+ 	
+ 	</mapper>

@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.customer.login.login.mapper.LoginCustomerMapper">
+	<!--  고객 로그인 -->
+	<select id="loginCheck" parameterType="kr.or.ddit.customer.login.login.vo.LoginCustomerVO" resultType="kr.or.ddit.customer.login.login.vo.LoginCustomerVO">
+		SELECT
+		    CUS_NO
+		  , CUS_ID
+		  , CUS_PW
+		  , CUS_DEPW
+		  , CUS_EMAIL
+		  , CUS_TEL
+		  , CUS_GENDER
+		  , CUS_BIRTH
+		  , CUS_SEND
+		  , CUS_NAME
+		  , CUS_ADD
+		  , CUS_ADD2
+		  , CUS_POSTCODE
+		FROM CUSTOMER
+		WHERE CUS_ID = #{cusId}
+		AND CUS_DEPW = #{cusPw}
+	</select>
+	
+	<!-- 아이디 찾기 -->
+ 	<select id="idForget" parameterType="kr.or.ddit.customer.login.login.vo.LoginCustomerVO" resultType="String">
+ 		SELECT
+ 			CUS_ID
+ 		FROM CUSTOMER
+ 		WHERE CUS_NAME = #{cusName}
+ 		AND CUS_TEL = #{cusTel}
+ 	</select>
+ 	
+ 	<!-- 비밀번호 찾기(임시비밀번호 발급) -->
+ 	<update id="updtTempPw" parameterType="kr.or.ddit.customer.login.login.vo.LoginCustomerVO">
+ 		UPDATE CUSTOMER
+ 			SET
+ 			CUS_PW = #{tempPassword}
+ 		  , CUS_DEPW = #{cusDepw}
+ 		WHERE CUS_ID = #{cusId}
+ 		AND CUS_TEL = #{cusTel}
+ 		AND CUS_NAME = #{cusName}
+ 	</update>
+ 	
+ 	<!-- 고객 아이디 중복체크 -->
+ 	<select id="idCheck" resultType="kr.or.ddit.customer.login.login.vo.LoginCustomerVO">
+		SELECT
+		    CUS_NO
+		  , CUS_ID
+		  , CUS_PW
+		  , CUS_DEPW
+		  , CUS_EMAIL
+		  , CUS_TEL
+		  , CUS_GENDER
+		  , CUS_BIRTH
+		  , CUS_SEND
+		  , CUS_NAME
+		  , CUS_ADD
+		  , CUS_ADD2
+		  , CUS_POSTCODE
+		FROM CUSTOMER
+		WHERE CUS_ID = #{cusId}
+	</select>
+ 	
+ 	<!-- 고객 회원가입 -->
+ 	<insert id="signup" parameterType="kr.or.ddit.customer.login.login.vo.LoginCustomerVO" useGeneratedKeys="true">
+		<selectKey keyProperty="cusNo" resultType="int" order="BEFORE">
+			SELECT SEQ_CUSTOMER.NEXTVAL FROM DUAL
+		</selectKey>
+		INSERT INTO CUSTOMER(
+		      CUS_NO
+		    , CUS_ID
+		    , CUS_PW
+		    , CUS_DEPW
+		    , CUS_EMAIL
+		    , CUS_TEL
+		    , CUS_GENDER
+		    , CUS_BIRTH
+		    , CUS_SEND
+		    , CUS_NAME
+		    , CUS_ADD
+		    , CUS_ADD2
+		    , CUS_POSTCODE
+		    , CUS_REGDT
+		) VALUES (
+		    #{cusNo}
+		  , #{cusId}
+		  , #{cusPw}
+		  , #{cusDepw}
+		  , #{cusEmail}
+		  , #{cusTel}
+		  , #{cusGender}
+		  , #{cusBirth}
+		  , #{cusSend}
+		  , #{cusName}
+		  , #{cusAdd}
+		  , #{cusAdd2}
+		  , #{cusPostcode}
+		  , SYSDATE
+		)
+	</insert>
+</mapper>

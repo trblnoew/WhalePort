@@ -1,0 +1,183 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  <mapper namespace="kr.or.ddit.management.airService.customerManagement.mapper.ICustomerMapper" >
+  	
+  	<sql id="customerSearch">
+  		<if test="searchWord !=null and searchType=='id'">
+  		 and (CUS_ID like '%'||#{searchWord}||'%')
+  		</if>
+  		<if test="searchWord !=null and searchType=='name'">
+  		 and (CUS_NAME like '%'||#{searchWord}||'%')
+  		</if>
+  		<if test='selectedItem == "now"'>
+		    and cus_delyn = 'N'
+		</if>
+		<if test='selectedItem == "M"'>
+		    and cus_gender = 'M'
+		</if>
+		<if test='selectedItem == "F"'>
+		    and cus_gender = 'F'
+		</if>
+		<if test='selectedItem == "J"'>
+		   
+		</if>
+		<if test='selectedItem == "Q"'>
+		    and  cus_delyn = 'Y'
+		</if>
+  	
+  	</sql>
+  	
+  	<select id="selectCusCount" parameterType="kr.or.ddit.util.vo.PaginationVO" resultType="int">
+  		select count(CUS_NO)
+  		from CUSTOMER
+  		where 1=1
+  		<include refid="customerSearch"/>
+  	</select>
+  	
+	<select id="selectCusList" parameterType="kr.or.ddit.util.vo.PaginationVO" resultType="kr.or.ddit.customer.login.login.vo.LoginCustomerVO">
+		select
+			b.*
+		from(
+			select
+				a.*, row_number() over(order by a.CUS_NO desc) rnum
+			from(	
+				select
+					CUS_NO,
+					CUS_ID,
+					CUS_PW,
+					CUS_EMAIL,
+					CUS_TEL,
+					CUS_GENDER,
+					CUS_BIRTH,
+					CUS_SEND,
+					CUS_NAME,
+					CUS_ADD,
+					CUS_ADD2,
+					CUS_POSTCODE,
+					CUS_DEPW,
+					CUS_DELYN
+				from CUSTOMER
+				where 1=1 
+				<include refid="customerSearch"/>
+				order by CUS_NO desc
+			) a
+		) b
+		<![CDATA[
+		where b.rnum >= #{startRow} and b.rnum <=#{endRow}
+		]]>
+	</select>  
+	
+	<select id="selectCustomer" parameterType="int" resultType="kr.or.ddit.customer.login.login.vo.LoginCustomerVO">
+		select
+			CUS_NO,
+			CUS_ID,
+			CUS_PW,
+			CUS_EMAIL,
+			CUS_TEL,
+			CUS_GENDER,
+			CUS_BIRTH,
+			CUS_SEND,
+			CUS_NAME,
+			CUS_ADD,
+			CUS_ADD2,
+			CUS_POSTCODE,
+			CUS_DEPW,
+			CUS_DELYN
+		from CUSTOMER
+		where CUS_NO = #{cus_no}
+	</select>
+	
+	<update id="cusUpdate" parameterType="kr.or.ddit.customer.login.login.vo.LoginCustomerVO">
+		UPDATE CUSTOMER
+		SET
+			CUS_NAME = #{cusName},
+			CUS_TEL = #{cusTel},
+			CUS_EMAIL = #{cusEmail},
+			CUS_BIRTH = #{cusBirth},
+			CUS_GENDER = #{cusGender},
+			CUS_SEND = #{cusSend},
+			CUS_POSTCODE = #{cusPostcode},
+			CUS_ADD = #{cusAdd},
+			CUS_ADD2 = #{cusAdd2}
+		WHERE CUS_NO = #{cusNo} 
+				
+	</update>
+	
+	<update id="cusDelete" parameterType="int">
+		UPDATE CUSTOMER
+		SET
+			CUS_DELYN = 'Y'
+		WHERE CUS_NO = #{cusNo}
+		
+	</update>
+	
+	<select id="selectCustomerList" resultType="kr.or.ddit.customer.login.login.vo.LoginCustomerVO">
+	
+		select 
+		    CUS_NO,
+		    CUS_ID,
+		    CUS_PW,
+		    CUS_EMAIL, 
+		    CUS_TEL,
+		    CUS_GENDER,
+		    CUS_BIRTH,
+		    CUS_SEND,
+		    CUS_NAME,
+		    CUS_ADD,
+		    CUS_ADD2,
+		    CUS_POSTCODE,
+		    CUS_DEPW,
+		    CUS_DELYN
+		FROM CUSTOMER
+		where 1=1 
+		<include refid="customerSearch"/>
+		order by CUS_NO desc
+	
+	</select>
+	
+	<select id="currentCount" resultType="int">
+		select count(cus_no) from customer where cus_delyn='N'	
+	</select>
+	
+	<select id="totalCount" resultType="int">
+		select count(cus_no) from customer	
+	</select>
+	
+	<select id="maleCount" resultType="int">
+		select  count(cus_no) from customer where cus_gender = 'M' and cus_delyn='N'	
+	</select>
+	
+	<select id="femaleCount" resultType="int">
+		select  count(cus_no) from customer where cus_gender = 'F' and cus_delyn='N'	
+	</select>
+	
+	<!-- 라인 차트 -->
+	<select id="lineChart" resultType="int">
+		SELECT
+		    COALESCE(SUM(CASE WHEN EXTRACT(MONTH FROM TO_DATE(C.CUS_REGDT, 'yy/MM/dd')) = M.MONTH THEN 1 ELSE 0 END), 0) AS CNTMONTH
+		FROM
+		    (SELECT LEVEL AS MONTH FROM DUAL CONNECT BY LEVEL &lt;= 11) M
+		LEFT JOIN
+		    CUSTOMER C ON EXTRACT(YEAR FROM TO_DATE(C.CUS_REGDT, 'yy/MM/dd')) = EXTRACT(YEAR FROM SYSDATE)
+		GROUP BY
+		    M.MONTH
+		ORDER BY
+		    M.MONTH
+	</select>
+	
+	<!-- 바 차트 -->
+	<select id="barChart" resultType="int">
+		SELECT 
+		    COUNT(*) AS join_count
+		FROM 
+		    CUSTOMER
+		WHERE 
+		    TO_CHAR(TO_DATE(CUS_REGDT, 'yy/MM/dd'), 'yy') BETWEEN '21' AND '24'
+		GROUP BY 
+		    TO_CHAR(TO_DATE(CUS_REGDT, 'yy/MM/dd'), 'yy')
+		ORDER BY 
+		    TO_CHAR(TO_DATE(CUS_REGDT, 'yy/MM/dd'), 'yy')
+	</select>
+  </mapper>

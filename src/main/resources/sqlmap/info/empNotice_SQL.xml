@@ -1,0 +1,252 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  <mapper namespace="kr.or.ddit.management.info.notice.mapper.IEmpNoticeMapper" >
+  
+  	<resultMap type="kr.or.ddit.customer.notice.vo.UserNoticeVO" id="empNoticeMap">
+	  	<id property="noNo" column="no_no" />
+	  	<result property="noNo" column="no_no" />
+		<result property="noTitle" column="no_title" />
+		<result property="noCategory" column="no_category" />
+		<result property="noContent" column="no_content" />
+		<result property="noCode" column="no_code" />
+		<result property="noFilecode" column="no_filecode" />
+		<result property="empNo" column="emp_no" />
+		<result property="noCount" column="no_count" />
+		<result property="noDelyn" column="no_delyn" />
+		<result property="noDate" column="no_date" />
+		<collection property="noticeFileList" resultMap="fileMap" />
+  	</resultMap>
+
+	<resultMap type="kr.or.ddit.util.vo.FileVO" id="fileMap">
+		<id property="fileNo" column="file_no" />
+		<result property="fileNo" column="file_no" />
+		<result property="fileOwner" column="file_owner" />
+		<result property="fileSavepath" column="file_savepath" />
+		<result property="fileSize" column="file_size" />
+		<result property="fileMime" column="file_mime" />
+		<result property="fileRealname" column="file_realname" />
+		<result property="fileSavename" column="file_savename" />
+		<result property="fileSavedate" column="file_savedate" />
+		<result property="fileDelyn" column="file_delyn" />
+		<result property="fileDowncount" column="file_downcount" />
+		<result property="fileFancysize" column="file_fancysize" />
+	</resultMap>  
+  
+  
+	  <sql id="empNoticSearch">
+		    <if test="searchWord != null and searchType == 'all'">
+		        and (
+		            NO_TITLE like '%'||#{searchWord}||'%' or
+		            NO_CONTENT like '%'||#{searchWord}||'%'
+		        )
+		    </if>
+	  		<if test="searchWord !=null and searchType=='title'">
+	  		 and (NO_TITLE like '%'||#{searchWord}||'%')
+			</if>  	
+			<if test="searchWord !=null and searchType=='content'">
+	  		 and (NO_CONTENT like '%'||#{searchWord}||'%')
+	  		</if>
+	  </sql>
+	  
+	  <select id="selectEmpNoticeCount" parameterType="kr.or.ddit.util.vo.PaginationVO" resultType="int">
+	  	SELECT COUNT(NO_NO)
+	  	FROM NOTICE
+	  	WHERE NO_CODE = 'NTC01' AND NO_DELYN='N'
+  		<include refid="empNoticSearch"/>
+	  </select>
+	  
+	  <select id="selectEmpNoticeList" parameterType="kr.or.ddit.util.vo.PaginationVO" resultType="kr.or.ddit.customer.notice.vo.UserNoticeVO">
+	  	select
+    b.*,
+    count(*) over() as total_cnt
+from (
+    select
+        a.*, row_number() over(order by a.NO_NO desc) rnum
+    from (    
+        select
+            NO_NO,
+            NO_TITLE,
+            NO_CATEGORY,
+            NO_CONTENT,
+            NO_CODE,
+            NO_FILECODE,
+            N.EMP_NO,
+            NO_COUNT,
+            NO_DELYN,
+            EMP_NAME,
+            NO_DATE
+        from NOTICE N
+        join EMPLOYEE E ON N.EMP_NO = E.EMP_NO
+        where N.NO_CODE = 'NTC01'
+          and N.NO_DELYN = 'N'
+        <include refid="empNoticSearch"/>
+        order by N.NO_NO desc
+    ) a
+) b
+<![CDATA[
+where b.rnum >= #{startRow} and b.rnum <= #{endRow}
+]]>
+
+	 </select>  	
+
+	<select id="selectEmpNotice" parameterType="kr.or.ddit.customer.notice.vo.UserNoticeVO" resultMap="empNoticeMap">
+			select * from
+                (select
+					NO_NO,
+					NO_TITLE,
+					NO_CATEGORY,
+					NO_CONTENT,
+					NO_CODE,
+					NO_FILECODE,
+					N.EMP_NO,
+					NO_COUNT,
+					NO_DELYN,
+                    EMP_NAME,
+					NO_DATE
+				from NOTICE N, EMPLOYEE E
+				where N.EMP_NO = E.EMP_NO AND NO_CODE = 'NTC01' AND NO_DELYN='N' AND NO_NO=#{noNo}) n left outer join file_data fd
+                on fd.file_owner = #{fileOwner}
+	</select>
+	
+
+	<insert id="insertEmpNotice" parameterType="kr.or.ddit.customer.notice.vo.UserNoticeVO" useGeneratedKeys="true">
+		<selectKey keyProperty="noNo" resultType="int" order="BEFORE"  >
+			select SEQ_NOTICE.nextval from dual
+		</selectKey>
+			insert into NOTICE(
+				NO_NO,
+				NO_TITLE,
+				NO_CATEGORY,
+				NO_CONTENT,
+				NO_CODE,
+				NO_FILECODE,
+				EMP_NO,
+				NO_COUNT,
+				NO_DELYN,
+				NO_DATE
+			) VALUES(
+				#{noNo},
+				#{noTitle},
+				#{noCategory},
+				#{noContent},
+				'NTC01',
+				#{noFilecode},
+				#{empNo},
+				0,
+				'N',
+				sysdate
+			)
+	</insert>
+	  
+	  <insert id="insertEmpNoticeFile" parameterType="kr.or.ddit.util.vo.FileVO" useGeneratedKeys="true">
+	 	<selectKey keyProperty="fileNo" resultType="int" order="BEFORE">
+	 		select SEQ_FILE.nextval from dual
+	 	</selectKey>
+	 
+		  insert into FILE_DATA(
+		  	FILE_NO,
+			FILE_OWNER,
+			FILE_SAVEPATH, 
+			FILE_SIZE,
+			FILE_MIME,
+			FILE_REALNAME,
+			FILE_SAVENAME,
+			FILE_SAVEDATE,
+			FILE_DELYN,
+			FILE_DOWNCOUNT,
+			FILE_FANCYSIZE
+		  )VALUES(
+		  	#{fileNo},
+			#{fileOwner},
+			#{fileSavepath},
+			#{fileSize},
+			#{fileMime},
+			#{fileRealname},
+			#{fileSavename},
+			sysdate,
+			'N',
+			0,
+			#{fileFancysize}
+		  
+		  )
+	  </insert>
+	  
+	  <select id="empNoticeDownload" parameterType="int" resultType="kr.or.ddit.util.vo.FileVO">
+		SELECT 
+		  	FILE_NO,
+			FILE_OWNER,
+			FILE_SAVEPATH,
+			FILE_SIZE,
+			FILE_MIME,
+			FILE_REALNAME,
+			FILE_SAVENAME,
+			FILE_SAVEDATE,
+			FILE_DELYN,
+			FILE_DOWNCOUNT,
+			FILE_FANCYSIZE
+		FROM FILE_DATA
+		WHERE FILE_NO = #{fileNo}
+	  </select>
+	  
+	  <update id="incrementEmpNoticeFileDown" parameterType="int">
+	  	UPDATE FILE_DATA
+	  	SET
+	  		FILE_DOWNCOUNT = FILE_DOWNCOUNT+1
+	  	WHERE FILE_NO = #{fileNo}
+	  </update>
+	  
+	  
+	  <update id="updateEmpNotice" parameterType="kr.or.ddit.customer.notice.vo.UserNoticeVO">
+		UPDATE NOTICE
+		SET 
+			no_title = #{noTitle},
+			no_category = #{noCategory},
+			no_content = #{noContent},
+			NO_FILECODE=#{noFilecode},
+			no_date = sysdate
+		WHERE NO_NO=#{noNo} AND NO_DELYN='N'
+	  </update>
+	  
+	  <select id="selectNoticeFile" parameterType="int" resultType="kr.or.ddit.util.vo.FileVO">
+	  	select
+			FILE_OWNER,
+			FILE_SAVEPATH,
+			FILE_SIZE,
+			FILE_MIME,
+			FILE_REALNAME,
+			FILE_SAVENAME,
+			FILE_SAVEDATE,
+			FILE_DELYN,
+			FILE_DOWNCOUNT,
+			FILE_FANCYSIZE
+		FROM FILE_DATA
+		WHERE FILE_NO = #{fileNo}
+	  </select>
+	  
+	  <delete id="deleteNoticeFile" parameterType="int">
+	  	delete from FILE_DATA
+	  	WHERE FILE_NO = #{fileNo}
+	  
+	  </delete>
+	  
+	  <update id="deleteEmpNotice">
+	  
+		UPDATE NOTICE
+		SET 
+			NO_DELYN='Y'
+		WHERE NO_NO=#{noNo}
+	  </update>
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  </mapper>

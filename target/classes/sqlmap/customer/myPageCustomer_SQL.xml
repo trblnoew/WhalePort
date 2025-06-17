@@ -1,0 +1,197 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  <mapper namespace="kr.or.ddit.customer.myPage.mapper.CustomerMyPageMapper" >
+  
+  <sql id="search">
+        <if test="searchWord != null and searchType == 'title'">
+            AND (no_title LIKE '%' || #{searchWord} || '%')
+        </if>
+        <if test="searchWord != null and searchType == 'content'">
+            AND (no_content LIKE '%' || #{searchWord} || '%')
+        </if>
+    </sql>
+  
+  
+  <select id="myInfomation" parameterType="string" resultType="kr.or.ddit.customer.myPage.vo.CustomerMyPageVO">
+  	select cus_no, cus_name, cus_id, cus_add, cus_add2, cus_postcode, cus_gender, cus_tel, cus_email, cus_birth
+  	from customer
+  	where cus_id = #{cusId}
+  </select>
+  
+  <update id="myInfoUpdate" parameterType="kr.or.ddit.customer.myPage.vo.CustomerMyPageVO">
+  	update customer 
+  	set 
+  		cus_name = #{cusName}, 
+  		cus_depw = #{cusDepw},
+  		cus_add = #{cusAdd}, 
+  		cus_add2 = #{cusAdd2}, 
+  		cus_postcode = #{cusPostcode}, 
+  		cus_gender = #{cusGender}, 
+  		cus_tel = #{cusTel}, 
+  		cus_email = #{cusEmail}, 
+  		cus_birth = #{cusBirth}
+  	where cus_id = #{cusId}
+  </update>
+  
+  <select id="myBoardList" parameterType="kr.or.ddit.util.vo.PaginationVO" resultType="kr.or.ddit.customer.myPage.vo.CustomerMyPageVO">
+        SELECT 
+            b.*
+        FROM (
+            SELECT 
+                a.*, ROW_NUMBER() OVER (ORDER BY a.QNA_NO DESC) rnum
+            FROM (
+                SELECT 
+                	q.QNA_NO, q.CUS_NO, q.EMP_NO, q.QNA_TITLE, q.QNA_CONTENT, q.QNA_ANS, q.QNA_FILECODE, q.QNA_COUNT, q.QNA_DELYN, q.QNA_DATE
+                FROM qna q, customer c
+                WHERE q.qna_delyn = 'N' 
+                	  and q.cus_no = c.cus_no 
+                	  and c.cus_no = (
+                	  				   select cus_no
+										from customer
+										where cus_id = #{cusId})
+                <include refid="search"/>
+            ) a
+        ) b
+        <![CDATA[
+            WHERE b.rnum >= #{startRow} AND b.rnum <= #{endRow}
+        ]]>
+   </select>
+  
+   <select id="myBoardCount" parameterType="kr.or.ddit.util.vo.PaginationVO" resultType="int">
+       SELECT COUNT(
+       			qna_no
+       			)
+       FROM qna q, customer c
+       WHERE q.qna_delyn = 'N' 
+       		 and q.cus_no = c.cus_no 
+      		 and c.cus_no = (select cus_no
+							 from customer
+							 where cus_id = #{cusId})
+       <include refid="search"/>
+   </select>
+   
+   <select id="myReserveCount" parameterType="string" resultType="hashMap">
+   		SELECT 
+			(SELECT COUNT(rr_no) FROM RG_RESERVATION where rr_status = 'Y' and cus_no=(
+             	  				select cus_no
+								from customer
+								where cus_id = #{cusId})) rrrCount,
+			(SELECT COUNT(mrr_no) FROM MR_RESERVATION where mrr_status = 'Y' and cus_no=(
+             	  				select cus_no
+								from customer
+								where cus_id = #{cusId})) mrCount, 
+			(SELECT COUNT(hr_no) FROM HT_RESERVATION where hr_status = 'Y' and cus_no=(
+             	  				select cus_no
+								from customer
+								where cus_id = #{cusId})) hrCount,
+			(SELECT COUNT(tk_no) FROM TICKETING where tk_del = 'N' and cus_no=(
+             	  				select cus_no
+								from customer
+								where cus_id = #{cusId})) trCount,
+			(SELECT COUNT(pr_no) FROM PARKING_REC where pr_status = 'Y' and cus_no=(
+             	  				select cus_no
+								from customer
+								where cus_id = #{cusId})) prCount
+			FROM DUAL
+   </select>
+   
+    <select id="myParkingReserve" parameterType="string" resultType="kr.or.ddit.customer.myPage.vo.CustomerMyPageVO">
+   		select p.pr_no, p.pl_no, p.pr_carno, p.pr_entry, p.pr_exit, p.pr_cost, p.pr_name, p.pr_tel, p.cus_no, p.pr_date
+   		from parking_rec p, customer c 
+   		where p.pr_status = 'Y'
+   				and p.cus_no = c.cus_no
+   				and c.cus_no = (
+             	  				select cus_no
+								from customer
+								where cus_id = #{cusId})
+   </select>
+   
+   <select id="myHotelReserve" parameterType="string" resultType="kr.or.ddit.customer.myPage.vo.CustomerMyPageVO">
+   		select h.hr_no, h.ht_no, h.hr_name, h.hr_tel, h.hr_checkin, h.hr_date, h.hr_cost
+   		from customer c, ht_reservation h
+   		where h.hr_status = 'Y' and h.cus_no = c.cus_no and h.cus_no = (
+										             	  				select cus_no
+																		from customer
+																		where cus_id = #{cusId})
+   </select>
+   
+   <select id="myRoungeReserve" parameterType="string" resultType="kr.or.ddit.customer.myPage.vo.CustomerMyPageVO">
+   		select r.rr_no, r.rg_no, r.rr_name, r.rr_tel, r.rr_count, r.rr_cost, r.rr_date
+   		from customer c, rg_reservation r
+   		where r.rr_status = 'Y' and r.cus_no = c.cus_no and r.cus_no = (
+										             	  				select cus_no
+																		from customer
+																		where cus_id = #{cusId})
+   </select>
+   
+   <select id="myTicketing" parameterType="string" resultType="kr.or.ddit.customer.myPage.vo.CustomerMyPageVO">
+   		SELECT t.tk_group, t.tk_no, t.cus_no, t.tk_flight, t.tk_seat, t.tk_depart, ic_depart.ic_kr AS tk_departcity, t.tk_departdate, t.tk_arrival, ic_arrival.ic_kr AS tk_arrivalcity, t.tk_arridate, t.tk_passport, t.tk_price, t.tk_engfirst, t.tk_lastname, t.tk_weight, t.tk_tel, t.tk_email, t.tk_birth, t.tk_gender, t.tk_group, pl.sc_gate, pl.sc_checkin
+		FROM customer c, ticketing t, iata_code ic_depart, iata_code ic_arrival, plane_schedule pl 
+		WHERE 
+		    t.cus_no = c.cus_no 
+		    AND t.tk_del = 'N' 
+		    AND ic_depart.ic_code = t.tk_depart 
+		    AND ic_arrival.ic_code = t.tk_arrival
+		    AND c.cus_no = ( select cus_no from customer where cus_id = #{cusId})
+			AND pl.sc_no = t.tk_flight
+		order by t.tk_date desc
+   </select>
+   
+   <update id="myPassportUpdate" parameterType="kr.or.ddit.customer.myPage.vo.CustomerMyPageVO">
+   		update ticketing
+   		set 
+   			tk_passport = #{tkPassport},
+   			tk_engfirst = #{tkEngfirst},
+   			tk_lastname = #{tkLastname}
+   		where tk_Group = #{tkGroup}
+   </update>
+   
+   <select id="departIcKr" parameterType="kr.or.ddit.customer.myPage.vo.CustomerMyPageVO" resultType="string">
+   		select ic_kr
+		from iata_code i, ticketing t
+		where i.ic_code = t.tk_depart and t.tk_no = #{tkNo} and t.cus_no = #(						
+					   												  select cus_no
+																	  from customer
+																	  where cus_id = #{cusId})
+   </select>
+ 
+ 	<select id="arrivalIcKr" parameterType="kr.or.ddit.customer.myPage.vo.CustomerMyPageVO" resultType="string">
+ 		select ic_kr
+		from iata_code i, ticketing t
+		where i.ic_code = t.tk_arrival and t.tk_no = #{tkNo} and t.cus_no = #(						
+					   												  select cus_no
+																	  from customer
+																	  where cus_id = #{cusId})
+ 	</select>
+ 	
+ 	<update id="myParkingReserveDelete" parameterType="kr.or.ddit.customer.myPage.vo.CustomerMyPageVO">
+ 		update parking_rec
+ 		set
+ 			pr_status = 'N'
+ 		where pr_no = #{prNo}
+ 	</update>
+ 	
+ 	<update id="myHtReserveDelete" parameterType="kr.or.ddit.customer.myPage.vo.CustomerMyPageVO">
+ 		update ht_reservation
+ 		set
+ 			hr_status = 'N'
+ 		where hr_no = #{hrNo}
+ 	</update>
+ 	
+ 	<update id="myRrReserveDelete" parameterType="kr.or.ddit.customer.myPage.vo.CustomerMyPageVO">
+ 		update rg_reservation
+ 		set
+ 			rr_status = 'N'
+ 		where rr_no = #{rrNo}
+ 	</update>
+ 	
+ 	<update id="myTicketingDelete" parameterType="kr.or.ddit.customer.myPage.vo.CustomerMyPageVO">
+ 		update ticketing
+ 		set
+ 			tk_del = 'Y'
+ 		where tk_no = #{tkNo}
+ 	</update>
+ 	
+  </mapper>

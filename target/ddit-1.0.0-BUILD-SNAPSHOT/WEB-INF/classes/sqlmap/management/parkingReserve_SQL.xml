@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  <mapper namespace="kr.or.ddit.management.airService.customerManagement.mapper.ParkingReserveMapper">
+	<resultMap type="kr.or.ddit.customer.reserve.parking.vo.ParkingVO" id="ParkingVO">
+		<result property="prNo" column="pr_no" />
+		<result property="prCarno" column="pr_carno" />
+		<result property="prEntry" column="pr_entry" />
+		<result property="prExit" column="pr_exit" />
+		<result property="prCost" column="pr_cost" />
+		<result property="prDate" column="pr_date" />
+		<result property="prWay" column="pr_way" />
+		<result property="prStatus" column="pr_status" />
+		<result property="cusNo" column="cus_no" />
+		<result property="prName" column="pr_name" />
+		<result property="prTel" column="pr_tel" />
+	</resultMap>
+  
+    <sql id="search">
+	    <if test="searchWord != null and searchWord != ''">
+	        and (
+	            pr_carno like '%' || #{searchWord} || '%' or 
+	            pr_name like '%' || #{searchWord} || '%' 
+<!-- 	            hr_checkin like '%' || #{searchWord} || '%'  -->
+	        )
+	    </if>
+	    <if test="selectedItem != null">
+	    	and (
+	    		pr_status = #{selectedItem}
+	    	)
+	    </if>
+	</sql>
+  
+ 	
+    <select id="list" parameterType="kr.or.ddit.util.vo.PaginationVO" resultType="kr.or.ddit.customer.reserve.parking.vo.ParkingVO">
+        SELECT 
+        b.*, 
+        P.PL_NAME
+		    FROM (
+		        SELECT 
+		            a.*, row_number() over(order by a.pr_no desc) rnum
+		        FROM (
+		            SELECT 
+		                 PR.PR_NO, PR.PL_NO, PR.PR_CARNO, PR.PR_ENTRY, PR.PR_EXIT, PR.PR_COST, PR.PR_DATE,
+ 						 PR.PR_WAY, PR.PR_STATUS, PR.CUS_NO, PR.PR_NAME, PR.PR_TEL
+		            FROM PARKING_REC PR
+		            WHERE 1=1
+		            <include refid="search"/>
+		            ORDER BY PR.PR_NO DESC 
+		        ) a
+		    ) b
+		    LEFT JOIN PARKING_LOT P ON b.PL_NO = P.PL_NO 
+		    <![CDATA[
+		        WHERE b.rnum >= #{startRow} AND b.rnum <= #{endRow} 
+		    ]]>
+		    ORDER BY b.PR_NO DESC
+    </select>
+
+ 	<select id="count" parameterType="kr.or.ddit.util.vo.PaginationVO" resultType="int">
+    	SELECT COUNT(PR_NO)
+        FROM PARKING_REC
+        WHERE 1=1
+        <include refid="search"/>
+    </select>
+    
+ 	
+ 	<update id="status" parameterType="kr.or.ddit.customer.reserve.parking.vo.ParkingVO">
+		UPDATE PARKING_REC
+		SET PR_STATUS = 'N'
+		WHERE PR_NO = #{prNo}
+ 	</update>
+ 	
+ 	<select id="count1" resultType="kr.or.ddit.customer.reserve.parking.vo.ParkingVO">
+    SELECT 
+        SUM(CASE WHEN PR_STATUS = 'Y' THEN 1 ELSE 0 END) AS countY,
+        SUM(CASE WHEN PR_STATUS = 'N' THEN 1 ELSE 0 END) AS countN,
+        SUM(CASE WHEN PR_STATUS = 'Y' THEN PR_COST ELSE 0 END) AS totalCost, 
+        COUNT(PR_NO) AS totalCount
+    FROM PARKING_REC
+    WHERE 1=1
+</select>
+
+	<select id="selectParkingReserveList" resultType="kr.or.ddit.customer.reserve.parking.vo.ParkingVO">
+	  SELECT 
+        b.*, 
+        P.PL_NAME
+		    FROM (
+		        SELECT 
+		            a.*, row_number() over(order by a.pr_no desc) rnum
+		        FROM (
+		            SELECT 
+		                 PR.PR_NO, PR.PL_NO, PR.PR_CARNO, PR.PR_ENTRY, PR.PR_EXIT, PR.PR_COST, PR.PR_DATE,
+ 						 PR.PR_WAY, PR.PR_STATUS, PR.CUS_NO, PR.PR_NAME, PR.PR_TEL
+		            FROM PARKING_REC PR
+		            WHERE 1=1
+		            ORDER BY PR.PR_NO DESC 
+		        ) a
+		    ) b
+		    LEFT JOIN PARKING_LOT P ON b.PL_NO = P.PL_NO
+	
+	</select>
+ 	
+
+ </mapper>

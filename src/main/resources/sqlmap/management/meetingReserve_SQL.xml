@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  <mapper namespace="kr.or.ddit.management.airService.customerManagement.mapper.MeetingReserveMapper">
+	<resultMap type="kr.or.ddit.customer.reserve.meeting.vo.MeetingVO" id="MeetingVO">
+		<result property="mrrNo" column="mrr_no" />
+		<result property="mrrName" column="mrr_name" />
+		<result property="mrrTel" column="mrr_tel" />
+		<result property="mrrTime" column="mrr_time" />
+		<result property="mrrDate" column="mrr_date" />
+		<result property="mrrUse" column="mrr_use" />
+		<result property="mrrStatus" column="mrr_status" />
+		<result property="cusNo" column="cus_no" />
+		<result property="mrrCost" column="mrr_cost" />
+	</resultMap>
+  
+    <sql id="search">
+	    <if test="searchWord != null and searchWord != ''">
+	        and (
+	            mrr_no like '%' || #{searchWord} || '%' or 
+	            mrr_name like '%' || #{searchWord} || '%' 
+<!-- 	            hr_checkin like '%' || #{searchWord} || '%'  -->
+	        )
+	    </if>
+	    <if test="selectedItem != null">
+	    	and (
+	    		mrr_status = #{selectedItem}
+	    	)
+	    </if>
+	</sql>
+  
+ 	
+    <select id="list" parameterType="kr.or.ddit.util.vo.PaginationVO" resultType="kr.or.ddit.customer.reserve.meeting.vo.MeetingVO">
+        SELECT 
+        b.*, 
+        M.MR_NAME
+		    FROM (
+		        SELECT 
+		            a.*, row_number() over(order by a.mrr_no desc) rnum
+		        FROM (
+		            SELECT 
+		                 MR.MRR_NO, MR.MR_NO, MR.MRR_NAME, MR.MRR_TEL, MR.MRR_TIME, MR.MRR_DATE, MR.MRR_USE,
+		                 MR.MRR_STATUS, MR.CUS_NO, MR.MRR_COST
+		            FROM MR_RESERVATION MR
+		            WHERE 1=1
+		            <include refid="search"/>
+		            ORDER BY MR.MRR_NO DESC 
+		        ) a
+		    ) b
+		    LEFT JOIN MEETING_ROOM M ON b.MR_NO = M.MR_NO 
+		    <![CDATA[
+		        WHERE b.rnum >= #{startRow} AND b.rnum <= #{endRow} 
+		    ]]>
+		    
+    </select>
+
+ 	<select id="count" parameterType="kr.or.ddit.util.vo.PaginationVO" resultType="int">
+    	SELECT COUNT(MRR_NO)
+        FROM MR_RESERVATION
+        WHERE 1=1
+        <include refid="search"/>
+    </select>
+    
+ 	
+ 	<update id="status" parameterType="kr.or.ddit.customer.reserve.meeting.vo.MeetingVO">
+		UPDATE MR_RESERVATION
+		SET MRR_STATUS = 'N'
+		WHERE MRR_NO = #{mrrNo}
+ 	</update>
+ 	
+	<select id="count1" resultType="kr.or.ddit.customer.reserve.meeting.vo.MeetingVO">
+	    SELECT 
+	        SUM(CASE WHEN MRR_STATUS = 'Y' THEN 1 ELSE 0 END) AS countY,
+	        SUM(CASE WHEN MRR_STATUS = 'N' THEN 1 ELSE 0 END) AS countN,
+	        SUM(CASE WHEN MRR_STATUS = 'Y' THEN MRR_COST ELSE 0 END) AS totalCost, 
+	        COUNT(MRR_NO) AS totalCount
+	    FROM MR_RESERVATION
+	    WHERE 1=1
+	</select>
+	
+	<select id="selectMeetingReserveList" resultType="kr.or.ddit.customer.reserve.meeting.vo.MeetingVO">
+	 SELECT 
+        b.*, 
+        M.MR_NAME
+		    FROM (
+		        SELECT 
+		            a.*, row_number() over(order by a.mrr_no desc) rnum
+		        FROM (
+		            SELECT 
+		                 MR.MRR_NO, MR.MR_NO, MR.MRR_NAME, MR.MRR_TEL, MR.MRR_TIME, MR.MRR_DATE, MR.MRR_USE,
+		                 MR.MRR_STATUS, MR.CUS_NO, MR.MRR_COST
+		            FROM MR_RESERVATION MR
+		            WHERE 1=1
+		            ORDER BY MR.MRR_NO DESC 
+		        ) a
+		    ) b
+		 LEFT JOIN MEETING_ROOM M ON b.MR_NO = M.MR_NO
+	</select>
+	
+	<select id="selectAllMeeting" resultType="int">
+  		select count(*) from MR_RESERVATION
+  	</select>
+  
+  	<!-- T -->
+  	<select id="selectTodayMeeting" resultType="int">
+  		select count(*) from MR_RESERVATION where TO_CHAR(mrr_date,'YYYY-MM-DD') =  TO_CHAR(SYSDATE,'YYYY-MM-DD')
+  	</select>
+  
+    <!-- new -->
+  	<select id="selectNewMeetingList" resultType="int">
+  		select count(*) from MR_RESERVATION where TO_CHAR(mrr_date,'YYYY-MM-DD') =  TO_CHAR(SYSDATE,'YYYY-MM-DD')
+  	</select>
+
+	<!-- N -->
+  	<select id="selectCancelMeetingList" resultType="int">
+  		select count(*) from MR_RESERVATION where mrr_status = 'N'
+  	</select>
+  	
+  	<select id="preReserNum" resultType="int">
+
+	 SELECT 
+	    COALESCE(COUNT(mr.MRR_NO), 0) AS meeting_count
+	FROM 
+	    (
+	    SELECT TRUNC(ADD_MONTHS(SYSDATE, -1), 'MM') + LEVEL - 1 AS MRR_DATE  
+	    FROM dual
+	    CONNECT BY LEVEL &lt;= LAST_DAY(TRUNC(ADD_MONTHS(SYSDATE, -1), 'MM')) - TRUNC(ADD_MONTHS(SYSDATE, -1), 'MM') + 1
+	    ) d
+	LEFT JOIN 
+	    MR_RESERVATION mr ON d.MRR_DATE = TRUNC(MR.MRR_DATE)  
+	GROUP BY 
+	    d.MRR_DATE
+	ORDER BY 
+	    d.MRR_DATE
+  	 
+  	 </select>
+  	 
+  	 <select id="thisReserNum" resultType="int">
+  	  SELECT 
+		    COALESCE(COUNT(mrr.MRR_NO), 0) AS meeting_count
+		FROM 
+		    (
+		        SELECT TRUNC(SYSDATE, 'MM') + LEVEL - 1 AS MRR_DATE  
+		        FROM dual
+		        CONNECT BY LEVEL &lt;= LAST_DAY(TRUNC(SYSDATE, 'MM')) - TRUNC(SYSDATE, 'MM') + 1 
+		    ) d
+		LEFT JOIN 
+		    MR_RESERVATION mr ON d.MRR_DATE = TRUNC(mr.MRR_DATE)   
+		WHERE 
+		    d.MRR_DATE &lt;= TRUNC(SYSDATE)  
+		GROUP BY 
+		    d.MRR_DATE
+		ORDER BY 
+		    d.MRR_DATE
+  	 </select>
+
+ </mapper>

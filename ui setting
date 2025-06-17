@@ -1,0 +1,265 @@
+1. 버튼
+ 	- 버튼의 순서 : 이미지 참고
+	- 버튼의 위치 : 오른쪽 하단
+	- 승인, 등록, 수정, 확인 : class="btn btn-primary"
+	- 삭제, 반려 : class="btn bg-danger-subtle text-danger"
+	- 경고(예:항목 미입력 시) : class="btn bg-warning-subtle text-warning"
+	- 이전, 목록 : class="btn btn-outline-primary"
+	- 아이디발급, 출입증보기 등 그 외 기타 버튼 : class="btn bg-secondary-subtle text-secondary"
+	
+2. 모달
+모달 사용시 필요한 스크립트 (mainTemplate 반영)
+ <!-- SweetAlert2 -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="../assets/libs/sweetalert2/dist/sweetalert2.min.js"></script>
+<script src="../assets/js/forms/sweet-alert.init.js"></script>
+
+
+	* 모달 버전 1 ( ~하시겠습니까? (진행 확인) -> ~가 완료되었습니다. (완료 알림) )
+	
+----- 코드 ------------------------------------------------------
+
+<script type="text/javascript">
+$(function(){
+    var delBtn = $("#delBtn");
+    var delForm = $("#delForm");
+    var empId = "${employeeVO.empId}"; 
+
+	// 삭제 버튼 클릭 시
+    delBtn.on("click", function(){
+        // SweetAlert2를 사용하여 경고창 표시
+        Swal.fire({
+            title: '퇴사 처리', // 제목 변경
+            text: '해당 직원의 퇴사를 진행하시겠습니까?', // 내용 변경
+            icon: 'warning', // 아이콘 설정
+            showCancelButton: true, // 취소 버튼 표시
+            confirmButtonText: '확인', // 확인 버튼 텍스트 변경
+            cancelButtonText: '취소', // 취소 버튼 텍스트 변경
+            customClass: {
+                cancelButton: 'btn btn-outline-primary', // 취소 버튼에 Bootstrap 클래스 추가
+                confirmButton: 'btn btn-primary me-2' // 확인 버튼에 Bootstrap 기본 클래스 추가 (선택 사항)
+            },
+            buttonsStyling: false // SweetAlert2의 기본 버튼 스타일 비활성화
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // 사용자가 "확인" 버튼을 클릭했을 경우
+                $.ajax({
+                    url: '/management/delete', // 삭제 API 엔드포인트
+                    method: 'POST',
+                    data: {
+                        empId: empId // 삭제할 데이터의 ID
+                    },
+                    success: function(response) {
+                        // 성공적으로 삭제되었을 때
+                        Swal.fire(
+                            '퇴사 처리 완료!',
+                            '해당 직원의 퇴사 처리가 완료되었습니다.',
+                            'success'
+                        ).then(() => {
+                            // SweetAlert2의 성공 메시지 후에 delForm을 제출
+                            delForm.submit(); // 폼 제출
+                        });
+                    },
+                    error: function(xhr, status, error) {
+                        // 오류가 발생했을 때
+                        Swal.fire(
+                            '오류!',
+                            '퇴사 처리에 실패했습니다.',
+                            'error'
+                        );
+                    }
+                });
+            }
+        });
+    });
+  });
+</script>
+
+
+
+	* 모달 버전 2 ( ~가 완료되었습니다. (완료 알림만 필요시) )
+	
+----- 코드 ------------------------------------------------------
+	
+<script type="text/javascript">
+$(function(){
+
+var addBtn = $("#addBtn");
+
+// 등록 버튼 이벤트
+	addBtn.on("click", function(){
+		
+		var formData = new FormData(empRegisterForm[0]); // FormData 생성
+		
+		
+		$.ajax({
+            url: '/management/register', 
+            method: 'POST',
+            data: formData,
+            contentType: false, // jQuery에서 content-type을 자동으로 설정하지 않도록
+            processData: false, // jQuery에서 데이터 처리를 하지 않도록
+            success: function(response) {
+                // 성공적으로 승인되었을 때
+                Swal.fire(
+                    '등록 완료!',
+                    '해당 직원의 등록 처리가 완료되었습니다.',
+                    'success'
+                ).then(() => {
+                    // SweetAlert2의 성공 메시지 후에 Form을 제출
+                	empRegisterForm.submit();
+                });
+            },
+            error: function(xhr, status, error) {
+                // 오류가 발생했을 때
+                Swal.fire(
+                    '오류!',
+                    '등록 처리에 실패했습니다.',
+                    'error'
+                );
+            }
+        });
+	});
+  });
+</script>
+
+
+	* 모달 버전 3 ( 반려 사유 입력 후 -> 반려가 완료되었습니다. )
+<!-- 반려 Modal -->
+			<div class="modal fade" id="rejectContactModal" tabindex="-1" role="dialog" aria-labelledby="rejectContactModalTitle" aria-hidden="true">
+			    <div class="modal-dialog modal-dialog-centered" role="document">
+			        <div class="modal-content">
+			            <div class="modal-header d-flex align-items-center">
+			                <h5 class="modal-title">반려</h5>
+			                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+			            </div>
+			            <div class="modal-body">
+			                <p>반려 사유를 입력하세요.</p>
+			                <textarea class="form-control" id="empReject" name="empReject" rows="3" placeholder="사유를 입력하세요"></textarea>
+			            </div>
+			            <div class="modal-footer">
+			                <button class="btn btn-outline-primary" data-bs-dismiss="modal">취소</button>
+			                <button id="rejectBtn" class="btn btn-primary">확인</button>
+			            </div>
+			        </div>
+			    </div>
+			</div>
+			
+<script type="text/javascript">
+$(document).ready(function() {
+
+    // 반려 버튼 눌렀을 때 (예시.... 체크박스 체크 한 후 반려버튼을 눌렀을 때 입니다.알아서 변경하세ㅎㅎㅎ)
+    $("#btn-cancel-contact").on("click", function() {
+        var checkboxes = $('.contact-chkbox:checked');
+        
+        if (checkboxes.length === 0) {
+            $('#warningModal').modal('show');
+            return;
+        }
+
+        checkboxes.each(function() {
+            var row = $(this).closest('tr');
+            var empIdElement = row.find('.usr-empId');
+            if (empIdElement.length) {
+                var empId = empIdElement.text();
+                console.log("선택한 직원의 사번 : " + empId);
+                
+                // 반려 모달 열기
+                var rejectModal = new bootstrap.Modal($("#rejectContactModal")[0]);
+                rejectModal.show();
+                
+                $("#rejectBtn").off('click').on("click", function() {
+                    var empReject = $("#empReject").val();
+                    
+                    // 반려 사유가 입력되지 않은 경우 경고
+                    if (!empReject) {
+                        alert('반려 사유를 입력하세요.');
+                        return;
+                    }
+                    
+                    $.ajax({
+                        url: '/info/empApprovalRe',
+                        method: 'POST',
+                        data: { empId: empId, empReject: empReject },
+                        
+                        
+                        success: function(response) {
+                            // 성공적으로 반려되었을 때
+                            Swal.fire(
+                                '반려 완료!',
+                                '해당 직원의 반려 처리가 완료되었습니다.',
+                                'success'
+                            ).then(() => {
+                                // SweetAlert2의 성공 메시지 후에
+                            	location.reload();
+                            });
+                        },
+                        error: function(xhr, status, error) {
+                            // 오류가 발생했을 때
+                            Swal.fire(
+                                '오류!',
+                                '반려 처리에 실패했습니다.',
+                                'error'
+                            );
+                        }
+                        
+                    });
+                });
+            } else {
+                console.log('empId 요소가 존재하지 않습니다.');
+            }
+        }); 
+    }); 
+});
+</script>
+
+
+	* 모달 버전 4 ( 경고 알러트 (예 : 항목 미체크시) )
+    <!-- 선택한 항목이 없을때 모달 -->
+    <div class="modal fade" id="warningModal" tabindex="-1" aria-labelledby="vertical-center-modal" aria-hidden="true">
+      <div class="modal-dialog modal-sm">
+        <div class="modal-content modal-filled bg-warning-subtle">
+          <div class="modal-body p-4">
+            <div class="text-center text-warning">
+              <i class="ti ti-alert-octagon fs-7"></i>
+              <h4 class="mt-2">Warning</h4>
+              <p class="mt-3">
+               항목을 선택해주세요.
+              </p>
+              <button type="button" class="btn btn-light my-2" data-bs-dismiss="modal">
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+        <!-- /.modal-content -->
+      </div>
+    </div>
+
+
+
+2. 유효성검사
+ * 1. 값을 입력하지 않았을 경우  
+
+<!-- 예시 : '필수입력 사항입니다'로 변경 -->
+<form action="/management/popup/register" class="mt-0" method="post" id="eventForm" enctype="multipart/form-data" novalidate>
+<input type="text" name="stEvtTitle" id="stEvtTitle" class="form-control" placeholder="제목을 입력하세요." value="${eventVO.stEvtTitle }" required data-validation-required-message="필수입력 사항입니다." />
+
+
+ * 2. 값을 잘못입력했을 때의 멘트
+ '잘못된 형식입니다.'
+ 
+ 
+ 
+ 3. 상태 표시 (승인대기 / 승인 / 반려 ...)
+  1) 승인의 경우 : 승인대기 / 승인 / 반려
+  
+   승인 : <span class="mb-1 badge  bg-primary-subtle text-primary">Primary</span>
+   승인대기 : <span class="mb-1 badge  bg-success-subtle text-success">Success</span>
+   반려 : <span class="mb-1 badge  bg-danger-subtle text-danger">Danger</span>
+   
+  2) 게시글의 경우
+   게시중 : <span class="mb-1 badge  bg-primary-subtle text-primary">Primary</span>
+   신청 : <span class="mb-1 badge  bg-success-subtle text-success">Success</span>
+   반려 : <span class="mb-1 badge  bg-danger-subtle text-danger">Danger</span>
+   게시종료 : <span class="mb-1 badge  bg-warning-subtle text-warning">Warning</span>
+ 

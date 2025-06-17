@@ -1,0 +1,192 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  <mapper namespace="kr.or.ddit.common.etc.chat.mapper.ChatMapper" >
+  	<select id="list" resultType="kr.or.ddit.common.login.vo.LoginCommonVO">
+  		SELECT
+		    EMP_NO
+		  , EMP_ID
+		  , EMP_PW
+		  , EMP_NAME
+		  , EMP_BIRTH
+		  , EMP_EMAIL
+		  , EMP_TEL
+		  , EMP_ADDR
+		  , EMP_ADDR2
+		  , EMP_POSTCODE
+		  , EMP_DEPT
+		  , EMP_QR
+		  , EMP_CARMODEL
+		  , EMP_CARNUM
+		  , EMP_STARTDATE
+		  , EMP_POSITION
+		  , EMP_IMAGE
+		  , EMP_APPROVAL
+		  , EMP_REJECT
+		FROM
+		    EMPLOYEE
+  	</select>
+  	
+  	<select id="singleRecentMsg" parameterType="kr.or.ddit.common.etc.chat.vo.ChatMsgVO" resultType="kr.or.ddit.common.etc.chat.vo.ChatMsgVO">
+	    SELECT cm.ROOM_NO, 
+		       c.CHAT_MSG, 
+		       c.CHAT_DATE, 
+		       cm2.USER_ID AS OTHER_USER_ID, 
+		       e.EMP_IMAGE AS USER_IMAGE,
+		       e.EMP_NAME AS USER_NAME,
+		       e.EMP_POSITION AS USER_POSITION
+		       
+		FROM CHATROOM_MEMBER cm
+		JOIN CHATMSG c
+		  ON cm.ROOM_NO = c.ROOM_NO
+		JOIN CHATROOM cr
+		  ON cm.ROOM_NO = cr.ROOM_NO
+		JOIN CHATROOM_MEMBER cm2
+		  ON cm2.ROOM_NO = cm.ROOM_NO
+		JOIN EMPLOYEE e
+		  ON e.EMP_ID = cm2.USER_ID
+		WHERE cm.USER_ID = #{userId}
+		  AND cr.SINGLE_CHAT = 'Y'
+		  AND cm2.USER_ID != #{userId}
+		  AND c.CHAT_DATE = (
+		    SELECT MAX(c2.CHAT_DATE)
+		    FROM CHATMSG c2
+		    WHERE c2.ROOM_NO = cm.ROOM_NO
+		  )
+		<if test="searchWord != null and searchWord != ''">
+	      AND (e.EMP_NAME LIKE '%' || #{searchWord} || '%'
+	           OR c.CHAT_MSG LIKE '%' || #{searchWord} || '%')
+	    </if>
+		ORDER BY c.CHAT_DATE DESC
+	</select>
+
+
+			
+	
+
+
+  	
+  	<select id="multiRecentMsg" parameterType="string" resultType="kr.or.ddit.common.etc.chat.vo.ChatMsgVO">
+  		SELECT cm.ROOM_NO, c.CHAT_MSG, c.CHAT_DATE, cr.ROOM_NAME, c.CHAT_SENDER
+		FROM CHATROOM_MEMBER cm
+		JOIN CHATMSG c
+		  ON cm.ROOM_NO = c.ROOM_NO
+		JOIN CHATROOM cr
+		  ON cm.ROOM_NO = cr.ROOM_NO
+		JOIN CHATROOM_MEMBER cm2
+		  ON cm2.ROOM_NO = cm.ROOM_NO
+		WHERE cm.USER_ID = #{userId}
+		  AND cr.SINGLE_CHAT = 'N'
+		  AND cm2.USER_ID != #{userId}
+		  AND c.CHAT_DATE = (
+		    SELECT MAX(c2.CHAT_DATE)
+		    FROM CHATMSG c2
+		    WHERE c2.ROOM_NO = cm.ROOM_NO
+		  )
+		ORDER BY c.CHAT_DATE DESC
+  	</select>
+  	
+  	<insert id="insertMsg">
+  		insert into chatmsg(
+  			chat_no, chat_msg, chat_sender, chat_date, room_no
+  		) values (
+  			seq_chatmsg.nextval, #{chatMsg}, #{chatSender}, sysdate , #{roomNo}
+  		)
+  	</insert>
+  	
+  	<select id="getMsg" parameterType="int" resultType="kr.or.ddit.common.etc.chat.vo.ChatMsgVO">
+  		select chat_no, chat_msg, chat_sender, chat_date, room_no, chat_filecode, chat_read, e.emp_image as USER_IMAGE, e.emp_name AS USER_NAME
+  		from chatmsg c, employee e 
+  		where room_no = #{roomNo} and
+  			  c.chat_sender = e.emp_id
+  		order by chat_date asc
+  	</select>
+  	
+  	
+   	<insert id="createRoom" useGeneratedKeys="true">
+   		<selectKey keyProperty="roomNo" order="BEFORE" resultType="int">
+   			select seq_chatroom.nextval from dual
+   		</selectKey>
+   		insert into chatroom(
+    		room_no, room_create, single_chat
+		)
+		values (
+		    #{roomNo}, sysdate, 'Y'
+		)
+   		
+   	</insert>
+	
+	<insert id="createMtRoom" useGeneratedKeys="true" parameterType="kr.or.ddit.common.etc.chat.vo.ChatRoomVO">
+		<selectKey keyProperty="roomNo" order="BEFORE" resultType="int">
+   			select seq_chatroom.nextval from dual
+   		</selectKey>
+   		insert into chatroom(
+    		room_no, room_create, single_chat, room_name
+		)
+		values (
+		    #{roomNo}, sysdate, 'N', #{roomName}
+		)
+	</insert>
+	
+	
+	<insert id="insertMember" parameterType="map">
+    insert into chatroom_member(
+            st_no, room_no, user_id, cr_date
+        ) values (
+            seq_chatroom_member.nextval, #{roomNo}, #{user}, sysdate
+        )
+    
+	</insert>
+   	
+   	<select id="nextval" resultType="int">
+   		select seq_chatroom_member.nextval from dual
+   	</select>
+   	
+  	<select id="unList" resultType="kr.or.ddit.common.login.vo.LoginCommonVO" parameterType="map">
+		SELECT E.EMP_NO, E.EMP_ID, E.EMP_BIRTH, E.EMP_EMAIL, E.EMP_TEL, E.EMP_DEPT, E.EMP_NAME, E.EMP_IMAGE, E.EMP_POSITION, NVL(RM.ROOM_NO, 0) AS ROOM_NO
+		FROM EMPLOYEE E
+		LEFT JOIN (
+    	SELECT CM.USER_ID, CM.ROOM_NO
+    	FROM CHATROOM_MEMBER CM
+    	JOIN CHATROOM C ON CM.ROOM_NO = C.ROOM_NO
+    	WHERE C.SINGLE_CHAT = 'Y' 
+      	AND CM.ROOM_NO IN (
+          SELECT CM2.ROOM_NO
+          FROM CHATROOM_MEMBER CM2
+          WHERE CM2.USER_ID = #{sessionUserId}
+      	)
+		) RM ON E.EMP_ID = RM.USER_ID
+		WHERE E.EMP_ID not in 
+		<foreach item="empId" collection="list"  open="(" separator="," close=")">
+	        #{empId}
+	    </foreach>  
+	    <![CDATA[
+   		AND E.EMP_ID <> #{sessionUserId}
+   		]]>	
+	</select>
+  	
+  	<select id="liveList" resultType="kr.or.ddit.common.login.vo.LoginCommonVO" parameterType="map">
+  		SELECT E.EMP_NO, E.EMP_ID, E.EMP_BIRTH, E.EMP_EMAIL, E.EMP_TEL, E.EMP_DEPT, E.EMP_NAME, E.EMP_IMAGE, E.EMP_POSITION, NVL(RM.ROOM_NO, 0) AS ROOM_NO
+		FROM EMPLOYEE E
+		LEFT JOIN (
+    	SELECT CM.USER_ID, CM.ROOM_NO
+    	FROM CHATROOM_MEMBER CM
+    	JOIN CHATROOM C ON CM.ROOM_NO = C.ROOM_NO
+    	WHERE C.SINGLE_CHAT = 'Y' 
+      	AND CM.ROOM_NO IN (
+          SELECT CM2.ROOM_NO
+          FROM CHATROOM_MEMBER CM2
+          WHERE CM2.USER_ID = #{sessionUserId}
+      	)
+		) RM ON E.EMP_ID = RM.USER_ID
+		WHERE E.EMP_ID in 
+		<foreach item="empId" collection="list"  open="(" separator="," close=")">
+	        #{empId}
+	    </foreach>  
+	    <![CDATA[
+   		AND E.EMP_ID <> #{sessionUserId}
+   		]]>	  
+  	</select>
+  	
+  </mapper>

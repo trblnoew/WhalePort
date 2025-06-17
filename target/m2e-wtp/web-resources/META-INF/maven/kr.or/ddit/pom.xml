@@ -1,0 +1,434 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/maven-v4_0_0.xsd">
+   <modelVersion>4.0.0</modelVersion>
+   <groupId>kr.or</groupId>
+   <artifactId>ddit</artifactId>
+   <name>S2Project</name>
+   <packaging>war</packaging>
+   <version>1.0.0-BUILD-SNAPSHOT</version>
+   <properties>
+      <java-version>1.8</java-version>
+      <org.springframework-version>5.3.25</org.springframework-version>
+      <org.aspectj-version>1.5.4</org.aspectj-version>
+      <org.slf4j-version>1.6.6</org.slf4j-version>
+      <maven.compiler.source>1.8</maven.compiler.source>
+      <maven.compiler.target>1.8</maven.compiler.target>
+   </properties>
+   <dependencies>
+      <!-- Spring -->
+      <dependency>
+         <groupId>org.springframework</groupId>
+         <artifactId>spring-context</artifactId>
+         <version>${org.springframework-version}</version>
+         <exclusions>
+            <!-- Exclude Commons Logging in favor of SLF4j -->
+            <exclusion>
+               <groupId>commons-logging</groupId>
+               <artifactId>commons-logging</artifactId>
+             </exclusion>
+         </exclusions>
+      </dependency>
+      <dependency>
+         <groupId>org.springframework</groupId>
+         <artifactId>spring-webmvc</artifactId>
+         <version>${org.springframework-version}</version>
+      </dependency>
+            
+      <!-- AspectJ -->
+      <dependency>
+         <groupId>org.aspectj</groupId>
+         <artifactId>aspectjrt</artifactId>
+         <version>${org.aspectj-version}</version>
+      </dependency>   
+      
+      <!-- Logging -->
+      <dependency>
+         <groupId>org.slf4j</groupId>
+         <artifactId>slf4j-api</artifactId>
+         <version>${org.slf4j-version}</version>
+      </dependency>
+      <dependency>
+         <groupId>org.slf4j</groupId>
+         <artifactId>jcl-over-slf4j</artifactId>
+         <version>${org.slf4j-version}</version>
+         <scope>runtime</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.slf4j</groupId>
+         <artifactId>slf4j-log4j12</artifactId>
+         <version>${org.slf4j-version}</version>
+         <scope>runtime</scope>
+      </dependency>
+      <dependency>
+         <groupId>log4j</groupId>
+         <artifactId>log4j</artifactId>
+         <version>1.2.15</version>
+         <exclusions>
+            <exclusion>
+               <groupId>javax.mail</groupId>
+               <artifactId>mail</artifactId>
+            </exclusion>
+            <exclusion>
+               <groupId>javax.jms</groupId>
+               <artifactId>jms</artifactId>
+            </exclusion>
+            <exclusion>
+               <groupId>com.sun.jdmk</groupId>
+               <artifactId>jmxtools</artifactId>
+            </exclusion>
+            <exclusion>
+               <groupId>com.sun.jmx</groupId>
+               <artifactId>jmxri</artifactId>
+            </exclusion>
+         </exclusions>
+         <scope>runtime</scope>
+      </dependency>
+
+      <!-- @Inject -->
+      <dependency>
+         <groupId>javax.inject</groupId>
+         <artifactId>javax.inject</artifactId>
+         <version>1</version>
+      </dependency>
+            
+      <!-- WebSocket -->      
+      
+      <dependency>
+         <groupId>org.springframework</groupId>
+         <artifactId>spring-websocket</artifactId>
+         <version>${org.springframework-version}</version>
+      </dependency>      
+      
+      <!-- Servlet -->
+      <dependency>
+         <groupId>javax.servlet</groupId>
+         <artifactId>javax.servlet-api</artifactId>
+         <version>3.1.0</version>
+         <scope>provided</scope>
+      </dependency>
+      <dependency>
+         <groupId>javax.servlet.jsp</groupId>
+         <artifactId>jsp-api</artifactId>
+         <version>2.1</version>
+         <scope>provided</scope>
+      </dependency>
+      <dependency>
+         <groupId>javax.servlet</groupId>
+         <artifactId>jstl</artifactId>
+         <version>1.2</version>
+      </dependency>
+   
+      <!-- json 데이터 바인딩을 위한 의존 라이브러리 -->
+      <dependency>
+         <groupId>com.fasterxml.jackson.core</groupId>
+         <artifactId>jackson-databind</artifactId>
+         <version>2.9.5</version>
+      </dependency>
+      
+      <!-- openAI와 소통을 위한 httpclient 의존성 추가 -->
+      <dependency>
+          <groupId>org.apache.httpcomponents</groupId>
+          <artifactId>httpclient</artifactId>
+          <version>4.5.13</version>
+      </dependency>
+      
+      
+      <!-- xml 데이터 바인딩을 위한 의존 라이브러리 -->
+<!--       <dependency> -->
+<!--          <groupId>com.fasterxml.jackson.dataformat</groupId> -->
+<!--          <artifactId>jackson-dataformat-xml</artifactId> -->
+<!--          <version>2.9.5</version> -->
+<!--       </dependency> -->
+      
+      <!-- lombok -->
+      <dependency>
+         <groupId>org.projectlombok</groupId>
+         <artifactId>lombok</artifactId>
+         <version>1.18.22</version>
+         <scope>provided</scope>
+      </dependency>
+      
+      <!-- 파일을 처리 하기 위한 라이브러리 의존 관계 정의 -->
+      <dependency>
+         <groupId>commons-io</groupId>
+         <artifactId>commons-io</artifactId>
+         <version>2.6</version>
+      </dependency>
+      
+      <!-- 파일을 업로드를 처리 하기 위한 라이브러리 의존 관계 정의 -->
+      <dependency>
+         <groupId>commons-fileupload</groupId>
+         <artifactId>commons-fileupload</artifactId>
+         <version>1.3.2</version>
+      </dependency>
+      
+      <!-- 입력값 검증을 위한 라이브러리 의존 관계 정의 -->
+      <dependency>
+         <groupId>org.hibernate</groupId>
+         <artifactId>hibernate-validator</artifactId>
+         <version>5.4.2.Final</version>
+      </dependency>
+      
+      <!-- oracle database 설정 시작 -->
+      <!-- 
+         mybatis는 xml로 쿼리를 작성하게 해주는 라이브러리
+         쿼리를 문자열로 코딩하지 않고 xml을 사용해서 관리하게 해준다.
+       -->
+      <dependency>
+         <groupId>org.mybatis</groupId>
+         <artifactId>mybatis</artifactId>
+         <version>3.5.4</version>
+      </dependency>
+      <!-- 
+         mybatis-spring은 스프링과 mybatis를 연동하게 해주는 라이브러리
+       -->
+      <dependency>
+         <groupId>org.mybatis</groupId>
+         <artifactId>mybatis-spring</artifactId>
+         <version>2.0.4</version>
+      </dependency>
+      <!-- 
+         jdbc는 자바에게 데이터베이스에 접속하기 위한 api
+         spring-jdbc는 스프링에서 jdbc를 통해 데이터베이스와 연결할 수 있게 해준다.
+       -->
+      <dependency>
+         <groupId>org.springframework</groupId>
+         <artifactId>spring-jdbc</artifactId>
+         <version>${org.springframework-version}</version>
+      </dependency>
+      <!-- 
+         dbcp2는 데이터베이스 커넥션 풀
+         데이터베이스 서버와 웹 서버는 서로 다른 프로그램이고,
+         실무에서는 전혀 다른 컴퓨터에 설치되어 있을 가능성이 높습니다.
+         서로 다른 컴퓨터와 프로그램이 통신을 하기 위해서는 서로 연결을 맺는 과정이 필요
+         미리 데이터베이스와 연동하기 위한 길을 만들어 놓는 라이브러리
+         요즘은 dbcp2보다 hikaricp를 자주 사용하기도 합니다.
+       -->
+      <dependency>
+         <groupId>org.apache.commons</groupId>
+         <artifactId>commons-dbcp2</artifactId>
+         <version>2.7.0</version>
+      </dependency>
+      <!-- 
+         로깅을 위한 라이브러리
+         데이터베이스에 연동하는 쿼리를 콘솔이나 파일 로그로 볼 수 있게 해준다.
+       -->
+      <dependency>
+         <groupId>org.bgee.log4jdbc-log4j2</groupId>
+         <artifactId>log4jdbc-log4j2-jdbc4</artifactId>
+         <version>1.16</version>
+      </dependency>
+      <dependency>
+         <groupId>org.bgee.log4jdbc-log4j2</groupId>
+         <artifactId>log4jdbc-log4j2-jdbc4.1</artifactId>
+         <version>1.16</version>
+      </dependency>
+      <!-- 
+         oracle 데이터 베이스 연동 라이브러리
+       -->
+      <dependency>
+         <groupId>com.oracle.database.jdbc</groupId>
+         <artifactId>ojdbc8</artifactId>
+         <version>21.1.0.0</version>
+      </dependency>
+      <!-- oracle database 설정 끝-->
+      
+      <!-- tiles 라이브러리 의존 관계 등록 시작-->
+      <dependency>
+         <groupId>org.apache.tiles</groupId>
+         <artifactId>tiles-core</artifactId>
+         <version>3.0.8</version>
+      </dependency>        
+      <dependency>
+         <groupId>org.apache.tiles</groupId>
+         <artifactId>tiles-extras</artifactId>
+         <version>3.0.8</version>
+      </dependency>        
+      <dependency>
+         <groupId>org.apache.tiles</groupId>
+         <artifactId>tiles-servlet</artifactId>
+         <version>3.0.8</version>
+      </dependency>        
+      <dependency>
+         <groupId>org.apache.tiles</groupId>
+         <artifactId>tiles-jsp</artifactId>
+         <version>3.0.8</version>
+      </dependency>        
+      <!-- tiles 라이브러리 의존 관계 등록 끝-->
+      
+      <dependency>
+         <groupId>org.apache.commons</groupId>
+         <artifactId>commons-lang3</artifactId>
+         <version>3.6</version>
+      </dependency>        
+      <dependency>
+         <groupId>com.google.code.gson</groupId>
+         <artifactId>gson</artifactId>
+         <version>2.8.2</version>
+      </dependency>
+              
+      <!-- 이미지 변환을 처리하기 위한 의존 라이브러리 -->
+      <dependency>
+         <groupId>org.imgscalr</groupId>
+         <artifactId>imgscalr-lib</artifactId>
+         <version>4.2</version>
+      </dependency>
+      
+        <!-- 이메일 인증을 위한 API -->
+		<!-- https://mvnrepository.com/artifact/javax.mail/mail -->
+		<dependency>
+		    <groupId>javax.mail</groupId>
+		    <artifactId>mail</artifactId>
+		    <version>1.4.7</version>
+		</dependency>
+		
+		<!-- PDF BOX -->
+		<dependency>
+		  <groupId>org.apache.pdfbox</groupId>
+		  <artifactId>pdfbox</artifactId>
+		  <version>2.0.8</version>
+		</dependency>
+
+		<!-- https://mvnrepository.com/artifact/org.springframework/spring-context-support -->
+		<dependency>
+		    <groupId>org.springframework</groupId>
+		    <artifactId>spring-context-support</artifactId>
+		    <version>5.3.9</version>
+		</dependency>
+
+		<!-- https://mvnrepository.com/artifact/org.quartz-scheduler/quartz-jobs -->
+		<dependency>
+			<groupId>org.quartz-scheduler</groupId>
+			<artifactId>quartz-jobs</artifactId>
+			<version>2.3.0</version>
+		</dependency>    
+      
+      <!-- AOP 설정 -->
+      <dependency>
+         <groupId>aspectj</groupId>
+         <artifactId>aspectjweaver</artifactId>
+         <version>${org.aspectj-version}</version>
+      </dependency>    
+      
+      <!-- 스프링 시큐리티 의존 라이브러리 설정 -->
+      <!-- 스프링 시큐리티를 웹에서 동작하도록 해준다. -->
+      <dependency>
+         <groupId>org.springframework.security</groupId>
+         <artifactId>spring-security-web</artifactId>
+         <version>5.0.7.RELEASE</version>
+      </dependency>
+      <!-- 스프링 시큐리티 설정을 도와준다. -->
+      <dependency>
+         <groupId>org.springframework.security</groupId>
+         <artifactId>spring-security-config</artifactId>
+         <version>5.0.7.RELEASE</version>
+      </dependency>
+      <!-- 스프링 시큐리티 핵심 기능 -->
+      <dependency>
+         <groupId>org.springframework.security</groupId>
+         <artifactId>spring-security-core</artifactId>
+         <version>5.0.7.RELEASE</version>
+      </dependency>
+      <!-- 스프링 시큐리티와 태그라이브러리를 연결해준다. -->
+      <dependency>
+         <groupId>org.springframework.security</groupId>
+         <artifactId>spring-security-taglibs</artifactId>
+         <version>5.0.7.RELEASE</version>
+      </dependency>
+      <!-- 스프링 시큐리티 의존 라이브러리 설정 끝-->
+      
+      <!-- xlsx 엑셀 다운로드-->
+      <dependency>
+	  	<groupId>org.apache.poi</groupId>
+	    <artifactId>poi-ooxml</artifactId>
+	    <version>3.7</version>
+	  </dependency>
+      
+      
+          
+      <!--  SimpleCaptcha -->
+      <dependency>
+         <groupId>com.github.penggle</groupId>
+         <artifactId>kaptcha</artifactId>
+         <version>2.3.2</version>
+      </dependency>
+      
+      <!-- CoolSMS -->
+      <dependency>
+          <groupId>net.nurigo</groupId>
+          <artifactId>sdk</artifactId>
+          <version>4.3.0</version>
+      </dependency>
+      
+      <!--  json -->
+      <dependency>
+	  	<groupId>org.json</groupId>
+	    <artifactId>json</artifactId>
+	    <version>20240303</version>
+	  </dependency>
+	  
+	  <!-- qr -->
+	  <dependency>
+		<groupId>com.google.zxing</groupId>
+		<artifactId>core</artifactId>
+		<version>3.4.1</version>
+	  </dependency>
+		 
+	  <dependency>
+	    <groupId>com.google.zxing</groupId>
+		<artifactId>javase</artifactId>
+		<version>3.4.1</version>
+	  </dependency>
+	  
+	  <!-- jenkins 오류로 인한 의존성 -->
+	  <dependency>
+    	<groupId>javax.annotation</groupId>
+    	<artifactId>javax.annotation-api</artifactId>
+    	<version>1.3.2</version>
+	  </dependency>
+      
+      <!-- Test -->
+      <dependency>
+         <groupId>junit</groupId>
+         <artifactId>junit</artifactId>
+         <version>4.7</version>
+         <scope>test</scope>
+      </dependency>        
+   </dependencies>
+    <build>
+        <plugins>
+            <plugin>
+                <artifactId>maven-eclipse-plugin</artifactId>
+                <version>2.9</version>
+                <configuration>
+                    <additionalProjectnatures>
+                        <projectnature>org.springframework.ide.eclipse.core.springnature</projectnature>
+                    </additionalProjectnatures>
+                    <additionalBuildcommands>
+                        <buildcommand>org.springframework.ide.eclipse.core.springbuilder</buildcommand>
+                    </additionalBuildcommands>
+                    <downloadSources>true</downloadSources>
+                    <downloadJavadocs>true</downloadJavadocs>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.10.1</version>
+                <configuration>
+                    <source>1.8</source>
+                    <target>1.8</target>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>1.2.1</version>
+                <configuration>
+                    <mainClass>org.test.int1.Main</mainClass>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>

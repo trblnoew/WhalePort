@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  <mapper namespace="kr.or.ddit.customer.reserve.rounge.mapper.RoungeMapper">
+ 	
+ 	<select id="list" resultType="kr.or.ddit.customer.reserve.rounge.vo.RoungeVO">
+		SELECT 
+			RG_NO, RG_NAME, RG_LOC, RG_COST, RG_USETIME, RG_PHOTO
+		FROM ROUNGE	
+		ORDER BY RG_NAME 
+ 	</select>
+ 	
+ 	<select id="detail" parameterType="int" resultType="kr.or.ddit.customer.reserve.rounge.vo.RoungeVO">
+		SELECT 
+			RG_NO, RG_NAME, RG_LOC, RG_COST, RG_USETIME, RG_PHOTO, RG_REVIEW, RG_CONTENT
+		FROM ROUNGE
+		WHERE RG_NO = #{rgNo}
+ 	</select>
+ 	
+ 	<insert id="register" parameterType="kr.or.ddit.customer.reserve.rounge.vo.RoungeVO">
+ 		INSERT INTO RG_RESERVATION (
+  			RR_NO, RG_NO, RR_NAME, RR_TEL, RR_COUNT, RR_COST, RR_DATE,  CUS_NO
+		) VALUES (
+		SEQ_RG_RESERVATION.NEXTVAL, #{rgNo}, #{rrName}, #{rrTel}, #{rrCount}, #{rrCost}, sysdate, #{cusNo})
+ 	</insert>
+ 	
+<!--  	<select id="rrDetail" parameterType="int" resultType="kr.or.ddit.customer.reserve.rounge.vo.RoungeVO"> -->
+<!-- 		SELECT  -->
+<!-- 			RR.RR_NO, RR.RG_NO, RR.RR_NAME, RR.RR_TEL, RR.RR_COUNT, RR.RR_STATUS,  RR.CUS_NO, R.RG_NAME, R.RG_COST -->
+<!-- 		FROM RG_RESERVATION RR, ROUNGE R -->
+<!-- 		WHERE RR.RG_NO = R.RG_NO -->
+<!--         AND RR.RG_NO = #{rgNo} -->
+<!--  	</select> -->
+ 
+ 	</mapper>

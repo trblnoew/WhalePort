@@ -1,0 +1,184 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  <mapper namespace="kr.or.ddit.management.airService.customerManagement.mapper.HotelReserveMapper">
+	<resultMap type="kr.or.ddit.customer.reserve.hotel.vo.HotelVO" id="HotelVO">
+		<result property="hrNo" column="hr_no" />
+		<result property="hrName" column="hr_name" />
+		<result property="hrTel" column="hr_tel" />
+		<result property="hrStatus" column="hr_status" />
+		<result property="hrCheckin" column="hr_checkin" />
+		<result property="hrCost" column="hr_cost" />
+		<result property="hrDate" column="hr_date" />
+		<result property="hrWay" column="hr_way" />
+		<result property="cusNo" column="cus_no" />
+	</resultMap>
+  
+    <sql id="search">
+	    <if test="searchWord != null and searchWord != ''">
+	        and (
+	            hr_no like '%' || #{searchWord} || '%' or 
+	            hr_name like '%' || #{searchWord} || '%' 
+<!-- 	            hr_checkin like '%' || #{searchWord} || '%'  -->
+	        )
+	    </if>
+	    <if test="selectedItem != null">
+	    	and (
+	    		hr_status = #{selectedItem}
+	    	)
+	    </if>
+	</sql>
+  
+ 	
+    <select id="list" parameterType="kr.or.ddit.util.vo.PaginationVO" resultType="kr.or.ddit.customer.reserve.hotel.vo.HotelVO">
+        SELECT 
+        b.*, 
+        H.HT_NAME
+		    FROM (
+		        SELECT 
+		            a.*, row_number() over(order by a.hr_no desc) rnum
+		        FROM (
+		            SELECT 
+		                HR.HR_NO, HR.HT_NO, HR.HR_NAME, HR.HR_TEL, HR.HR_STATUS, 
+		                HR.HR_CHECKIN, HR.HR_COST, HR.HR_DATE, HR.HR_WAY, 
+		                HR.CUS_NO
+		            FROM HT_RESERVATION HR
+		            WHERE 1=1
+		            <include refid="search"/>
+		            ORDER BY HR.HR_NO DESC 
+		        ) a
+		    ) b
+		    LEFT JOIN HOTEL H ON b.HT_NO = H.HT_NO 
+		    <![CDATA[
+		        WHERE b.rnum >= #{startRow} AND b.rnum <= #{endRow} 
+		    ]]>
+		    ORDER BY b.HR_NO DESC
+		    
+    </select>
+
+ 	<select id="count" parameterType="kr.or.ddit.util.vo.PaginationVO" resultType="int">
+    	SELECT COUNT(HR_NO)
+        FROM HT_RESERVATION
+        WHERE 1=1
+        <include refid="search"/>
+    </select>
+    
+<!--     <select id="detail" parameterType="int" resultType="kr.or.ddit.customer.reserve.hotel.vo.HotelVO"> -->
+<!--         SELECT  -->
+<!-- 			HR_NO, HR_NAME, HR_TEL, HR_STATUS,  -->
+<!-- 		    HR_CHECKIN, HR_COST, HR_DATE, HR_WAY,  -->
+<!-- 		    CUS_NO -->
+<!-- 		FROM HT_RESERVATION -->
+<!-- 		WHERE HR_NO = #{hrNo} -->
+<!--  	</select> -->
+ 	
+ 	<update id="status" parameterType="kr.or.ddit.customer.reserve.hotel.vo.HotelVO">
+		UPDATE HT_RESERVATION
+		SET HR_STATUS = 'N'
+		WHERE HR_NO = #{hrNo}
+ 	</update>
+ 	
+
+<!--  	<update id="update" parameterType="kr.or.ddit.customer.reserve.hotel.vo.HotelVO"> -->
+<!-- 	    UPDATE HT_RESERVATION HR -->
+<!-- 	    SET HR.HR_NAME = #{hrName}, -->
+<!-- 	        HR.HR_TEL = #{hrTel}, -->
+<!-- 	        HR.HR_STATUS = #{hrStatus}, -->
+<!-- 	        HR.HR_CHECKIN = #{hrCheckin}, -->
+<!-- 	        HR.HR_COST = #{hrCost}, -->
+<!-- 	        HR.HR_DATE = #{hrDate}, -->
+<!-- 	        HR.HR_WAY = #{hrDate}, -->
+<!-- 	        HR.HR_CUS = #{hrCus} -->
+<!-- 	    WHERE HR.HR_NO = #{hrNo} -->
+<!--  	</update> -->
+
+	<select id="count1" resultType="kr.or.ddit.customer.reserve.hotel.vo.HotelVO">
+    SELECT 
+        SUM(CASE WHEN HR_STATUS = 'Y' THEN 1 ELSE 0 END) AS countY,
+        SUM(CASE WHEN HR_STATUS = 'N' THEN 1 ELSE 0 END) AS countN,
+        SUM(CASE WHEN HR_STATUS = 'Y' THEN HR_COST ELSE 0 END) AS totalCost,  -- 수정된 부분
+        COUNT(HR_NO) AS totalCount
+    FROM HT_RESERVATION
+    WHERE 1=1
+</select>
+
+	<select id="selectHotelReserveList" resultType="kr.or.ddit.customer.reserve.hotel.vo.HotelVO">
+	    SELECT 
+        b.*, 
+        H.HT_NAME
+		    FROM (
+		        SELECT 
+		            a.*, row_number() over(order by a.hr_no desc) rnum
+		        FROM (
+		            SELECT 
+		                HR.HR_NO, HR.HT_NO, HR.HR_NAME, HR.HR_TEL, HR.HR_STATUS, 
+		                HR.HR_CHECKIN, HR.HR_COST, HR.HR_DATE, HR.HR_WAY, 
+		                HR.CUS_NO
+		            FROM HT_RESERVATION HR
+		            WHERE 1=1
+		            ORDER BY HR.HR_NO DESC 
+		        ) a
+		    ) b
+		    LEFT JOIN HOTEL H ON b.HT_NO = H.HT_NO 
+	</select>
+	 	<select id="selectAllHotel" resultType="int">
+  		select count(*) from HT_RESERVATION
+  	</select>
+  
+  	<!-- T -->
+  	<select id="selectTodayHotel" resultType="int">
+  		select count(*) from HT_RESERVATION where TO_CHAR(rr_date,'YYYY-MM-DD') =  TO_CHAR(SYSDATE,'YYYY-MM-DD')
+  	</select>
+  
+    <!-- new -->
+  	<select id="selectNewHotelList" resultType="int">
+  		select count(*) from HT_RESERVATION where TO_CHAR(rr_date,'YYYY-MM-DD') =  TO_CHAR(SYSDATE,'YYYY-MM-DD')
+  	</select>
+
+	<!-- N -->
+  	<select id="selectCancelHotelList" resultType="int">
+  		select count(*) from HT_RESERVATION where hr_status = 'N'
+  	</select>
+  	
+  	<select id="preReserNum" resultType="int">
+
+	 SELECT 
+	    COALESCE(COUNT(hr.HR_NO), 0) AS hotel_count
+	FROM 
+	    (
+	    SELECT TRUNC(ADD_MONTHS(SYSDATE, -1), 'MM') + LEVEL - 1 AS HR_DATE  
+	    FROM dual
+	    CONNECT BY LEVEL &lt;= LAST_DAY(TRUNC(ADD_MONTHS(SYSDATE, -1), 'MM')) - TRUNC(ADD_MONTHS(SYSDATE, -1), 'MM') + 1
+	    ) d
+	LEFT JOIN 
+	    HT_RESERVATION hr ON d.HR_DATE = TRUNC(hr.HR_DATE)  
+	GROUP BY 
+	    d.HR_DATE
+	ORDER BY 
+	    d.HR_DATE
+  	 
+  	 </select>
+  	 
+  	 <select id="thisReserNum" resultType="int">
+  	  SELECT 
+		    COALESCE(COUNT(hr.HR_NO), 0) AS hotel_count
+		FROM 
+		    (
+		        SELECT TRUNC(SYSDATE, 'MM') + LEVEL - 1 AS HR_DATE  
+		        FROM dual
+		        CONNECT BY LEVEL &lt;= LAST_DAY(TRUNC(SYSDATE, 'MM')) - TRUNC(SYSDATE, 'MM') + 1 
+		    ) d
+		LEFT JOIN 
+		    HT_RESERVATION hr ON d.HR_DATE = TRUNC(hr.HR_DATE)   
+		WHERE 
+		    d.HR_DATE &lt;= TRUNC(SYSDATE)  
+		GROUP BY 
+		    d.HR_DATE
+		ORDER BY 
+		    d.HR_DATE
+  	 </select>
+
+
+
+ </mapper>

@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+ <mapper namespace="kr.or.ddit.common.login.mapper.LoginCommonMapper">
+ 
+ 	<resultMap type="kr.or.ddit.common.login.vo.LoginCommonVO" id="loginCommonMap">
+ 		<id property="empNo" column="emp_no" />
+ 		<result property="empNo" column="emp_no"/>
+ 		<result property="empId" column="emp_id"/>
+ 		<result property="empPw" column="emp_pw"/>
+ 		<result property="empName" column="emp_name"/>
+ 		<result property="empBirth" column="emp_birth"/>
+ 		<result property="empEmail" column="emp_email"/>
+ 		<result property="empTel" column="emp_tel"/>
+ 		<result property="empAddr" column="emp_addr"/>
+ 		<result property="empAddr2" column="emp_addr2"/>
+ 		<result property="empPostcode" column="emp_postcode"/>
+ 		<result property="empDept" column="emp_dept"/>
+ 		<result property="empQr" column="emp_qr"/>
+ 		<result property="empCarmodel" column="emp_carmodel"/>
+ 		<result property="empCarnum" column="emp_carnum"/>
+ 		<result property="empStartdate" column="emp_startdate"/>
+ 		<result property="empPosition" column="emp_position"/>
+ 		<result property="empImage" column="emp_image"/>
+ 		<result property="empApproval" column="emp_approval"/>
+ 		<result property="empReject" column="emp_reject"/>
+ 		<result property="empLock" column="emp_lock"/>
+ 		<result property="empDepw" column="emp_depw"/>
+ 		<collection property="authList" resultMap="CommonAuthMap" />
+ 	</resultMap>
+ 	
+ 	<resultMap type="kr.or.ddit.common.login.vo.LoginCommonAuthVO" id="CommonAuthMap">
+ 		<result property="empNo" column="emp_no"/>
+ 		<result property="ptNo" column="pt_no"/>
+ 		<result property="authName" column="auth_name"/>
+ 	</resultMap>
+ 	
+ 	<!-- 직원 스프링 시큐리티 -->
+ 	<select id="readByUserId" parameterType="string" resultMap="loginCommonMap">
+ 		SELECT
+		  m.EMP_NO
+		  , EMP_ID
+		  , EMP_PW
+		  , EMP_DEPW
+		  , EMP_NAME
+		  , EMP_BIRTH
+		  , EMP_EMAIL
+		  , EMP_TEL
+		  , EMP_ADDR
+		  , EMP_ADDR2
+		  , EMP_POSTCODE
+		  , EMP_DEPT
+		  , EMP_QR
+		  , EMP_CARMODEL
+		  , EMP_CARNUM
+		  , EMP_STARTDATE
+		  , EMP_POSITION
+		  , EMP_IMAGE
+		  , EMP_APPROVAL
+		  , EMP_REJECT
+		  , AUTH_NAME
+		FROM
+		    EMPLOYEE m LEFT OUTER JOIN EMPLOYEE_AUTH a ON(m.EMP_NO = a.EMP_NO)
+		WHERE EMP_ID = #{empId}
+		AND EMP_LOCK = 'N'
+ 	</select>
+ 	
+ 	<!-- 직원 아이디 찾기 -->
+ 	<select id="idForget" parameterType="kr.or.ddit.common.login.vo.LoginCommonVO" resultType="String">
+ 		SELECT
+ 			EMP_ID
+ 		FROM EMPLOYEE
+ 		WHERE EMP_NAME = #{empName}
+ 		AND EMP_TEL = #{empTel}
+ 	</select>
+ 	
+ 	<!-- 직원 비밀번호 찾기(임시비밀번호 발급) -->
+ 	<update id="updtTempPw" parameterType="kr.or.ddit.common.login.vo.LoginCommonVO">
+ 		UPDATE EMPLOYEE
+ 			SET
+ 			EMP_PW = #{tempPassword}
+ 		  , EMP_DEPW = #{empDepw}
+ 		WHERE EMP_ID = #{empId}
+ 		AND EMP_TEL = #{empTel}
+ 		AND EMP_NAME = #{empName}
+ 	</update>
+ 	
+ 	<!-- 직원 계정 잠김 여부 -->
+ 	<update id="lockAccount" parameterType="hashMap">
+ 		UPDATE EMPLOYEE
+ 			SET
+ 			EMP_LOCK = #{status}
+ 		WHERE EMP_ID = #{empId}
+ 	</update>
+	
+	<!-- 협력업체 아이디 찾기 -->
+ 	<select id="partnerForgetId" parameterType="kr.or.ddit.partner.common.account.vo.PartnerVO" resultType="String">
+ 		SELECT
+ 			PT_ID
+ 		FROM PARTNER
+ 		WHERE PT_NAME = #{ptName}
+ 		AND PT_CEO = #{ptCeo}
+ 	</select>
+ </mapper>

@@ -1,0 +1,283 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+ <mapper namespace="kr.or.ddit.partner.facilities.mapper.PartnerInspectionMapper">
+  
+  	 <resultMap type="kr.or.ddit.partner.facilities.vo.PartnerInspectionVO" id="partnerInspectionMap">
+		<result property="inNo" column="in_no" />
+		<result property="ptNo" column="pt_no" />
+		<result property="ptName" column="pt_name" />
+		<result property="empNo" column="emp_no" />
+		<result property="inStartdate" column="in_startdate" />
+		<result property="inEnddate" column="in_enddate" />
+		<result property="inGoal" column="in_goal" />
+		<result property="inStaff" column="in_staff" />
+		<result property="inPlace" column="in_place" />
+		<result property="seInQr" column="se_in_qr" />
+		<result property="inState" column="in_state" />
+		<result property="inCode" column="in_code" />
+		<result property="inFilecode" column="in_filecode" />
+		<result property="inTitle" column="in_title" />
+		<result property="inContent" column="in_content" />
+		<result property="reportDate" column="report_date" />
+		<result property="inReception" column="in_reception" />
+		<collection property="reportFileList" resultMap="fileMap"/>
+  	 </resultMap>
+  	 
+  	 <resultMap type="kr.or.ddit.util.vo.FileVO" id="fileMap">
+  	 	<id property="fileNo" column="file_no" />
+		<result property="fileNo" column="file_no" />
+		<result property="fileOwner" column="file_owner" />
+		<result property="fileSavepath" column="file_savepath" />
+		<result property="fileSize" column="file_size" />
+		<result property="fileMime" column="file_mime" />
+		<result property="fileRealname" column="file_realname" />
+		<result property="fileSavename" column="file_savename" />
+		<result property="fileSavedate" column="file_savedate" />
+		<result property="fileDelyn" column="file_delyn" />
+		<result property="fileDowncount" column="file_downcount" />
+		<result property="fileFancysize" column="file_fancysize" />
+  	 </resultMap>
+  
+    <sql id="search">
+      <if test="searchWord != null and searchWord != ''">
+        and (
+        	in_title like '%' || #{searchWord} || '%' or
+        	in_content like '%' || #{searchWord} || '%'
+        	)
+     </if>
+     <if test="selectedItem != null and selectedItem != ''">
+	    and (
+	        in_state = #{selectedItem}
+	    )
+	</if>
+    </sql>
+  
+    <sql id="search2">
+      <if test="searchWord != null and searchWord != ''">
+        and (
+        	in_reception like '%' || #{searchWord} || '%'
+        	)
+     </if>
+     <if test="selectedItem != null and selectedItem != ''">
+	    and (
+	        in_state = #{selectedItem}
+	    )
+	</if>
+    </sql>
+    
+    <select id="reportList" parameterType="kr.or.ddit.util.vo.PaginationVO" resultType="kr.or.ddit.partner.facilities.vo.PartnerInspectionVO">
+        SELECT 
+            b.*
+        FROM (
+            SELECT 
+                a.*, row_number() over(order by a.in_no desc) rnum
+            FROM (
+                SELECT 
+                    INS.IN_NO, INS.PT_NO, INS.IN_STARTDATE, INS.IN_ENDDATE, INS.IN_GOAL, INS.IN_STAFF, INS.IN_PLACE, INS.IN_STATE, INS.IN_FILECODE, INS.IN_TITLE, INS.IN_CONTENT, INS.REPORT_DATE
+				FROM INSPECTION_SCHEDULE INS LEFT OUTER JOIN PARTNER PT ON(INS.PT_NO = PT.PT_NO)
+                WHERE 1=1
+                AND PT.PT_NO = #{ptNo}
+                AND IN_STATE = 'Y'
+                <include refid="search"/>
+                ORDER BY INS.IN_NO DESC
+            ) a
+        ) b
+        <![CDATA[
+             WHERE b.rnum >= #{startRow} AND b.rnum <= #{endRow}
+        ]]> 
+    </select>
+    
+    <select id="reportList2" parameterType="kr.or.ddit.util.vo.PaginationVO" resultType="kr.or.ddit.partner.facilities.vo.PartnerInspectionVO">
+        SELECT 
+            b.*
+        FROM (
+            SELECT 
+                a.*, row_number() over(order by a.in_no desc) rnum
+            FROM (
+                SELECT 
+                    INS.IN_NO, INS.PT_NO, INS.IN_STARTDATE, INS.IN_ENDDATE, INS.IN_GOAL, INS.IN_STAFF, INS.IN_PLACE, INS.IN_STATE, INS.IN_FILECODE, INS.IN_TITLE, INS.IN_CONTENT, INS.REPORT_DATE
+				FROM INSPECTION_SCHEDULE INS LEFT OUTER JOIN PARTNER PT ON(INS.PT_NO = PT.PT_NO)
+                WHERE 1=1
+                AND IN_STATE = 'Y'
+                <include refid="search"/>
+                ORDER BY INS.IN_NO DESC
+            ) a
+        ) b
+        <![CDATA[
+             WHERE b.rnum >= #{startRow} AND b.rnum <= #{endRow}
+        ]]> 
+    </select>
+    
+    <select id="reportCount" parameterType="kr.or.ddit.util.vo.PaginationVO" resultType="int">
+    	SELECT COUNT(IN_NO)
+        FROM INSPECTION_SCHEDULE
+        WHERE 1=1
+        AND PT_NO = #{ptNo}
+        AND IN_STATE = 'Y'
+        <include refid="search"/>
+    </select>
+    
+    <select id="reportCount2" parameterType="kr.or.ddit.util.vo.PaginationVO" resultType="int">
+    	SELECT COUNT(IN_NO)
+        FROM INSPECTION_SCHEDULE
+        WHERE 1=1
+        AND IN_STATE = 'Y'
+        <include refid="search"/>
+    </select>
+    
+    <select id="scheduleCount" parameterType="kr.or.ddit.util.vo.PaginationVO" resultType="int">
+    	SELECT COUNT(IN_NO)
+        FROM INSPECTION_SCHEDULE
+        WHERE 1=1
+        AND PT_NO = #{ptNo}
+        <include refid="search2"/>
+    </select>
+    
+    <select id="scheduleCount2" parameterType="kr.or.ddit.util.vo.PaginationVO" resultType="int">
+    	SELECT COUNT(IN_NO)
+        FROM INSPECTION_SCHEDULE
+        WHERE 1=1
+        <include refid="search2"/>
+    </select>
+    
+     <update id="reportRegister" parameterType="kr.or.ddit.partner.facilities.vo.PartnerInspectionVO" >
+ 		UPDATE INSPECTION_SCHEDULE
+ 		SET 
+ 			PT_NO = #{ptNo}, 
+ 			IN_TITLE = #{inTitle}, 
+ 			IN_CONTENT = #{inContent},
+ 			REPORT_DATE = sysdate,
+ 			IN_STATE = 'Y'
+		WHERE IN_NO = #{inNo} 
+ 	</update>
+ 	
+ 	 <insert id="insertReportFile" parameterType="kr.or.ddit.util.vo.FileVO">
+ 	 	<selectKey keyProperty="fileNo" resultType="int" order="BEFORE">
+	 		select SEQ_FILE.nextval from dual
+	 	</selectKey>
+   		  insert into FILE_DATA(
+		  	FILE_NO,
+			FILE_OWNER,
+			FILE_SAVEPATH, 
+			FILE_SIZE,
+			FILE_MIME,
+			FILE_REALNAME,
+			FILE_SAVENAME,
+			FILE_SAVEDATE,
+			FILE_DELYN,
+			FILE_DOWNCOUNT,
+			FILE_FANCYSIZE
+		  )VALUES(
+		  	#{fileNo},
+			#{fileOwner},
+			#{fileSavepath},
+			#{fileSize},
+			#{fileMime},
+			#{fileRealname},
+			#{fileSavename},
+			sysdate,
+			'N',
+			0,
+			#{fileFancysize}
+		  
+		  )
+	  </insert>
+ 	
+ 	<select id="reportDetail" parameterType="kr.or.ddit.partner.facilities.vo.PartnerInspectionVO" resultMap="partnerInspectionMap">
+			SELECT * FROM
+               (SELECT 
+                    INS.IN_NO, INS.PT_NO, INS.IN_STARTDATE, INS.IN_ENDDATE, INS.IN_GOAL, INS.IN_STAFF, INS.IN_PLACE, INS.IN_STATE, INS.IN_FILECODE, INS.IN_TITLE, INS.IN_CONTENT, INS.REPORT_DATE
+				FROM INSPECTION_SCHEDULE INS LEFT OUTER JOIN PARTNER PT ON(INS.PT_NO = PT.PT_NO)
+                WHERE 1=1
+                AND INS.IN_NO = #{inNo}) N LEFT OUTER JOIN FILE_DATA FD
+			ON FD.FILE_OWNER = #{fileOwner}
+ 	</select>
+ 	
+     <insert id="scheduleRegister" parameterType="kr.or.ddit.partner.facilities.vo.PartnerInspectionVO" useGeneratedKeys="true">
+ 		<selectKey keyProperty="inNo" resultType="int" order="BEFORE"  >
+			select SEQ_INSPECTION_SCHEDULE.NEXTVAL from dual
+		</selectKey>
+ 		INSERT INTO INSPECTION_SCHEDULE(
+ 			IN_NO, PT_NO, IN_GOAL, IN_PLACE, IN_RECEPTION, IN_STATE
+ 		)VALUES(
+ 			#{inNo}, #{ptNo}, #{inGoal}, #{inPlace}, #{inReception}, 'N'
+ 		)
+ 	</insert>
+ 	    
+    <select id="scheduleList" parameterType="kr.or.ddit.util.vo.PaginationVO" resultType="kr.or.ddit.partner.facilities.vo.PartnerInspectionVO">
+        SELECT 
+            b.*
+        FROM (
+            SELECT 
+                a.*, row_number() over(order by a.in_no desc) rnum
+            FROM (
+                SELECT 
+                    INS.IN_NO, INS.PT_NO, INS.IN_GOAL, INS.IN_PLACE, INS.IN_STATE, INS.IN_RECEPTION, PT.PT_NAME
+				FROM INSPECTION_SCHEDULE INS LEFT OUTER JOIN PARTNER PT ON(INS.PT_NO = PT.PT_NO)
+                WHERE 1=1
+                AND PT.PT_NO = #{ptNo}
+                <include refid="search2"/>
+                ORDER BY INS.IN_NO DESC
+            ) a
+        ) b
+        <![CDATA[
+             WHERE b.rnum >= #{startRow} AND b.rnum <= #{endRow}
+        ]]> 
+    </select>
+ 	    
+    <select id="scheduleList2" parameterType="kr.or.ddit.util.vo.PaginationVO" resultType="kr.or.ddit.partner.facilities.vo.PartnerInspectionVO">
+        SELECT 
+            b.*
+        FROM (
+            SELECT 
+                a.*, row_number() over(order by a.in_no desc) rnum
+            FROM (
+                SELECT 
+                    INS.IN_NO, INS.PT_NO, INS.IN_GOAL, INS.IN_PLACE, INS.IN_STATE, INS.IN_RECEPTION, PT.PT_NAME
+				FROM INSPECTION_SCHEDULE INS LEFT OUTER JOIN PARTNER PT ON(INS.PT_NO = PT.PT_NO)
+                WHERE 1=1
+                <include refid="search2"/>
+                ORDER BY INS.IN_NO DESC
+            ) a
+        ) b
+        <![CDATA[
+             WHERE b.rnum >= #{startRow} AND b.rnum <= #{endRow}
+        ]]> 
+    </select>
+ 	    
+    <select id="scheduleList3" resultType="kr.or.ddit.partner.facilities.vo.PartnerInspectionVO">
+             SELECT 
+                 IN_NO, PT_NO, IN_RECEPTION
+			 FROM INSPECTION_SCHEDULE
+			 WHERE IN_STATE = 'H'
+             ORDER BY IN_NO ASC
+    </select>
+    
+    <delete id="scheduleCheck" parameterType="int">
+		UPDATE INSPECTION_SCHEDULE
+		SET 
+			IN_STATE='H'
+		WHERE IN_NO = #{inNo}
+ 	</delete>
+ 	
+ 	<select id="count" resultType="kr.or.ddit.partner.facilities.vo.PartnerInspectionVO">
+	    SELECT 
+	        SUM(CASE WHEN IN_STATE = 'Y' THEN 1 ELSE 0 END) AS countY,
+	        SUM(CASE WHEN IN_STATE = 'N' THEN 1 ELSE 0 END) AS countN,
+	        SUM(CASE WHEN IN_STATE = 'H' THEN 1 ELSE 0 END) AS countH
+	    FROM INSPECTION_SCHEDULE
+	</select>
+ 	
+ 	<select id="count2" parameterType="int" resultType="kr.or.ddit.partner.facilities.vo.PartnerInspectionVO">
+	    SELECT 
+	        SUM(CASE WHEN IN_STATE = 'Y' THEN 1 ELSE 0 END) AS countY,
+	        SUM(CASE WHEN IN_STATE = 'N' THEN 1 ELSE 0 END) AS countN,
+	        SUM(CASE WHEN IN_STATE = 'H' THEN 1 ELSE 0 END) AS countH
+	    FROM INSPECTION_SCHEDULE
+	    WHERE PT_NO = #{ptNo}
+	</select>
+
+ 	
+</mapper>

@@ -1,0 +1,211 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  <mapper namespace="kr.or.ddit.management.airService.customerManagement.mapper.ITicketingMapper" >
+  
+  	<!-- 
+  	PaginationVO(totalRecord=0, totalPage=0, currentPage=1, screenSize=10, blockSize=5, 
+		startRow=1, endRow=10, startPage=1, endPage=5, dataList=null, searchType=null, 
+		searchWord=null, selectedItem=T, cusId=null)
+  	 -->
+     <sql id="tickegingSearch">
+	    <if test="searchWord != null and searchWord != ''">
+	         and t.cus_no in (select cus_no from customer where cus_name=#{searchWord}) 
+	         or t.tk_krname = #{searchWord}
+	    </if>
+		<if test='selectedItem == "T"'>
+		    and TO_CHAR(tk_departdate,'YYYY-MM-DD') =  TO_CHAR(SYSDATE,'YYYY-MM-DD')
+		</if>
+		<if test='selectedItem == "new"'>
+		    and TO_CHAR(tk_date,'YYYY-MM-DD') =  TO_CHAR(SYSDATE,'YYYY-MM-DD')
+		</if>
+		<if test='selectedItem == "N"'>
+		    and  tk_del = 'Y'
+		</if>
+	</sql>
+  
+  
+  	<select id="selectAllTicketing" resultType="int">
+  		select count(*) from ticketing
+  	</select>
+  
+  	<!-- T -->
+  	<select id="selectTodayTicketing" resultType="int">
+  		select count(*) from ticketing where TO_CHAR(tk_departdate,'YYYY-MM-DD') =  TO_CHAR(SYSDATE,'YYYY-MM-DD')
+  	</select>
+  
+    <!-- new -->
+  	<select id="selectNewTicketingList" resultType="int">
+  		select count(*) from ticketing where TO_CHAR(tk_date,'YYYY-MM-DD') =  TO_CHAR(SYSDATE,'YYYY-MM-DD')
+  	</select>
+
+	<!-- N -->
+  	<select id="selectCancelTicketingList" resultType="int">
+  		select count(*) from ticketing where tk_del = 'Y'
+  	</select>
+  	
+  	<!-- 
+  	PaginationVO(totalRecord=0, totalPage=0, currentPage=1, screenSize=10, blockSize=5, 
+		startRow=1, endRow=10, startPage=1, endPage=5, dataList=null, searchType=null, 
+		searchWord=null, selectedItem=T, cusId=null)
+  	 -->
+  	 <select id="selectTicketingCount" parameterType="kr.or.ddit.customer.reserve.parking.vo.ParkingVO" resultType="int">
+  	 	select count(tk_no) from ticketing t where 1=1
+  	 	<include refid="tickegingSearch"/>
+  	 </select>
+  	 
+  	 <!-- 
+  	 pagingVO2 : PaginationVO(totalRecord=25, totalPage=3, currentPage=1, screenSize=10, 
+		blockSize=5, startRow=1, endRow=10, startPage=1, endPage=5, dataList=null,
+		 searchType=null, searchWord=null, selectedItem=T, cusId=null)
+  	  -->
+  	 <select id="selectTicketingList" parameterType="kr.or.ddit.util.vo.PaginationVO" resultType="kr.or.ddit.customer.airport.airportReserve.vo.TicketingVO">
+  	 select
+			b.*
+		from(
+			select
+				a.*, row_number() over(order by a.TK_NO desc) rnum
+			from(	
+				select
+                TK_NO,
+                t.CUS_NO,
+                cus_name,
+                TK_AGE,
+                TK_FLIGHT,
+                TK_SEAT,
+                TK_DEPART,
+                TK_DEPARTDATE,
+                TK_ARRIVAL,
+                TK_ARRIDATE,
+                TK_PASSPORT,
+                TK_PRICE,
+                TK_ENGFIRST,
+                TK_LASTNAME,
+                TK_WEIGHT,
+                TK_TEL,
+                TK_EMAIL,
+                TK_BIRTH,
+                TK_GENDER,
+                TK_GROUP,
+                TK_DATE,
+                TK_DEL,
+                TK_KRNAME
+				from TICKETING t, customer c
+                where t.cus_no = c.cus_no and
+                TK_PRICE > 0
+				<include refid="tickegingSearch"/>
+				order by TK_NO desc
+			) a
+		) b
+		<![CDATA[
+		where b.rnum >= #{startRow} and b.rnum <=#{endRow}
+		]]>
+  	 
+  	 </select>
+  	 
+  	 <select id="preReserNum" resultType="int">
+
+	 SELECT 
+	    COALESCE(COUNT(t.TK_NO), 0) AS ticket_count
+	FROM 
+	    (
+	    SELECT TRUNC(ADD_MONTHS(SYSDATE, -1), 'MM') + LEVEL - 1 AS TK_DATE  
+	    FROM dual
+	    CONNECT BY LEVEL &lt;= LAST_DAY(TRUNC(ADD_MONTHS(SYSDATE, -1), 'MM')) - TRUNC(ADD_MONTHS(SYSDATE, -1), 'MM') + 1
+	    ) d
+	LEFT JOIN 
+	    ticketing t ON d.TK_DATE = TRUNC(t.TK_DATE)  
+	GROUP BY 
+	    d.TK_DATE
+	ORDER BY 
+	    d.TK_DATE
+  	 
+  	 </select>
+  	 
+  	 <select id="thisReserNum" resultType="int">
+  	  SELECT 
+		    COALESCE(COUNT(t.TK_NO), 0) AS ticket_count
+		FROM 
+		    (
+		        SELECT TRUNC(SYSDATE, 'MM') + LEVEL - 1 AS TK_DATE  
+		        FROM dual
+		        CONNECT BY LEVEL &lt;= LAST_DAY(TRUNC(SYSDATE, 'MM')) - TRUNC(SYSDATE, 'MM') + 1 
+		    ) d
+		LEFT JOIN 
+		    ticketing t ON d.TK_DATE = TRUNC(t.TK_DATE)   
+		WHERE 
+		    d.TK_DATE &lt;= TRUNC(SYSDATE)  
+		GROUP BY 
+		    d.TK_DATE
+		ORDER BY 
+		    d.TK_DATE
+  	 </select>
+  	 
+  	 <select id="countryList" resultType="kr.or.ddit.customer.airport.airportReserve.vo.TicketingVO">
+		select COUNT(IC_COUNTRY) as ic_count , IC_COUNTRY from iata_code where ic_code in( select tk_arrival from ticketing) GROUP BY IC_COUNTRY ORDER BY COUNT(IC_COUNTRY) DESC
+  	 </select>
+  	 
+  	 <select id="selectAirlineReserve" parameterType="int" resultType="kr.or.ddit.customer.airport.airportReserve.vo.TicketingVO">
+	  	 select 
+	        TK_NO,
+	        CUS_NO,
+	        TK_AGE,
+	        TK_FLIGHT,
+	        TK_SEAT,
+	        TK_DEPART,
+	        TK_DEPARTDATE,
+	        TK_ARRIVAL,
+	        TK_ARRIDATE,
+	        TK_PASSPORT,
+	        TK_PRICE,
+	        TK_ENGFIRST,
+	        TK_LASTNAME,
+	        TK_WEIGHT,
+	        TK_TEL,
+	        TK_EMAIL,
+	        TK_BIRTH,
+	        TK_GENDER,
+	        TK_GROUP,
+	        TK_DATE,
+	        TK_DEL,
+	        TK_KRNAME
+	    from ticketing where tk_no= #{tkNo}
+  	 </select>
+  	 
+  	 <select id="selectCustomer" parameterType="int" resultType="kr.or.ddit.customer.login.login.vo.LoginCustomerVO">
+  	 
+	  	select
+	        CUS_NO,
+	        CUS_ID,
+	        CUS_PW,
+	        CUS_EMAIL,
+	        CUS_TEL,
+	        CUS_GENDER,
+	        CUS_BIRTH,
+	        CUS_SEND,
+	        CUS_NAME,
+	        CUS_ADD,
+	        CUS_ADD2,
+	        CUS_POSTCODE,
+	        CUS_DEPW,
+	        CUS_DELYN,
+	        CUS_REGDT
+	    from customer
+	    where CUS_NO = #{cusNo}
+  	 </select>
+  	 
+  	 <update id="airlineReserveCancel" parameterType="int">
+	  	 update ticketing
+		 	set tk_del = 'Y'
+	     where tk_no = #{tkNo}
+  	 </update>
+  	  
+  
+  
+  
+  
+  
+  
+  
+  </mapper>

@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?> <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.customer.reserve.parking.mapper.ParkingMapper">
+
+	<select id="check" parameterType="kr.or.ddit.customer.reserve.parking.vo.ParkingVO" resultType="int">
+		select 
+			COUNT(*) total_count 
+		from parking_rec
+		where pl_no = #{plNo}
+		<![CDATA[	 
+		and (
+			pr_entry >= to_date(#{prEntry}, 'yyyy-MM-dd') and pr_entry <= to_date(#{prExit}, 'yyyy-MM-dd')
+		)
+		or 
+		(
+			pr_exit >= to_date(#{prEntry}, 'yyyy-MM-dd') and pr_exit <= to_date(#{prExit}, 'yyyy-MM-dd')
+		)
+		]]>
+	</select>
+
+
+	<select id="list" resultType="kr.or.ddit.customer.reserve.parking.vo.ParkingVO">
+		SELECT
+		PL_NO, PL_NAME, PL_COST
+		FROM PARKING_LOT
+	</select>
+
+
+	<insert id="register" parameterType="kr.or.ddit.customer.reserve.parking.vo.ParkingVO">
+		INSERT INTO PARKING_REC (
+		PR_NO, PL_NO, PR_CARNO, PR_NAME, PR_TEL, PR_ENTRY, PR_EXIT, PR_COST, PR_DATE, CUS_NO
+		) VALUES (
+		SEQ_PARKING_REC.NEXTVAL, #{plNo}, #{prCarno}, #{prName}, #{prTel}, #{prEntry}, #{prExit},
+		#{prCost}, sysdate, #{cusNo})
+	</insert>
+
+	<select id="select" resultType="kr.or.ddit.customer.reserve.parking.vo.ParkingVO" parameterType="int">
+		select PL_NO, PL_NAME, PL_COST
+		FROM PARKING_LOT
+		where pl_no = #{plNo}
+
+	</select>
+</mapper>

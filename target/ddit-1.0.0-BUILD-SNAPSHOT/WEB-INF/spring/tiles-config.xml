@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE tiles-definitions PUBLIC "-//Apache Software Foundation//DTD Tiles Configuration 3.0//EN" "http://tiles.apache.org/dtds/tiles-config_3_0.dtd">
+<tiles-definitions>
+	
+	<definition name="mainTemplate" template="/WEB-INF/views/mainTemplate.jsp" >
+		<put-attribute name="header" value="/WEB-INF/views/tiles/header.jsp" />
+		<put-attribute name="aside" value="/WEB-INF/views/tiles/aside.jsp" />
+	</definition>
+	<definition name="myqrTemplate" template="/WEB-INF/views/user/myqrTemplate.jsp" >
+	</definition>
+	
+	<definition name="partnerMainTemplate" template="/WEB-INF/views/partnerMainTemplate.jsp" >
+		<put-attribute name="partnerHeader" value="/WEB-INF/views/tiles/partnerHeader.jsp" />
+		<put-attribute name="partnerAside" value="/WEB-INF/views/tiles/partnerAside.jsp" />
+	</definition>
+	
+	<definition name="customerMainTemplate" template="/WEB-INF/views/customerMainTemplate.jsp" >
+		<put-attribute name="cusHeader" value="/WEB-INF/views/tiles/cusHeader.jsp" />
+		<put-attribute name="cusFooter" value="/WEB-INF/views/tiles/cusFooter.jsp" />
+	</definition>
+	
+	
+
+	<definition name="user/**" extends="myqrTemplate" >
+		<put-attribute name="content" value="/WEB-INF/views/user/{1}.jsp" />
+	</definition>
+	
+	<definition name="common/**" extends="mainTemplate" >
+		<put-attribute name="content" value="/WEB-INF/views/common/{1}.jsp" />
+	</definition>
+	
+	<definition name="management/**" extends="mainTemplate" >
+		<put-attribute name="content" value="/WEB-INF/views/management/{1}.jsp" />
+	</definition>
+
+	<!-- partner -->
+	<definition name="partner/**" extends="partnerMainTemplate" >
+		<put-attribute name="partnerContent" value="/WEB-INF/views/partner/{1}.jsp" />
+	</definition>
+
+	<!-- customer -->
+	<definition name="customer/**" extends="customerMainTemplate" >
+		<put-attribute name="cusContent" value="/WEB-INF/views/customer/{1}.jsp" />
+	</definition>
+<!-- 	<definition name="customer/**" extends="cumtomerMainTemplate" > -->
+<!-- 		<put-attribute name="cusContent" value="/WEB-INF/views/user/{1}.jsp" /> -->
+<!-- 	</definition> -->
+
+	
+<!-- 	<definition name="loginTemplate" template="/WEB-INF/views/loginTemplate.jsp" ></definition> -->
+	
+<!-- 	<definition name="conn/*" extends="loginTemplate" > -->
+<!-- 		<put-attribute name="content" value="/WEB-INF/views/notice/{1}.jsp" /> -->
+<!-- 	</definition> -->
+	
+</tiles-definitions>

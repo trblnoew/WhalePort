@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  <mapper namespace="kr.or.ddit.management.human.etc.mapper.EtcManagementMapper" >
+  
+  <select id="totalInfoWorkHours" resultType="kr.or.ddit.management.human.etc.vo.EtcManagementVO">
+  	SELECT 
+    TO_CHAR(w.work_arrive, 'YYYY-MM') AS month,  
+    TRUNC(SUM(w.work_all) / 60) AS totalInfoWorkHours  
+		FROM 
+		    employee e
+		JOIN 
+		    emp_work w ON e.emp_no = w.emp_no
+		WHERE 
+		    e.emp_dept = '인사부'
+		GROUP BY 
+		    TO_CHAR(w.work_arrive, 'YYYY-MM')
+		ORDER BY 
+		    TO_CHAR(w.work_arrive, 'YYYY-MM') DESC
+
+
+  </select>
+  
+  </mapper>

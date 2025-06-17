@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  <mapper namespace="kr.or.ddit.management.airService.customerManagement.mapper.RoungeReserveMapper">
+	<resultMap type="kr.or.ddit.customer.reserve.rounge.vo.RoungeVO" id="RoungeVO">
+		<result property="rrNo" column="rr_no" />
+		<result property="rrName" column="rr_name" />
+		<result property="rrTel" column="rr_tel" />
+		<result property="rrCount" column="rr_count" />
+		<result property="rrStatus" column="rr_status" />
+		<result property="rrCost" column="rr_cost" />
+		<result property="rrDate" column="rr_date" />
+		<result property="rrWay" column="rr_way" />
+		<result property="cusNo" column="cus_no" />
+	</resultMap>
+  
+    <sql id="search">
+	    <if test="searchWord != null and searchWord != ''">
+	        and (
+	            rr_no like '%' || #{searchWord} || '%' or 
+	            rr_name like '%' || #{searchWord} || '%' 
+<!-- 	            hr_checkin like '%' || #{searchWord} || '%'  -->
+	        )
+	    </if>
+	    <if test="selectedItem != null">
+	    	and (
+	    		rr_status = #{selectedItem}
+	    	)
+	    </if>
+	</sql>
+  
+ 	
+    <select id="list" parameterType="kr.or.ddit.util.vo.PaginationVO" resultType="kr.or.ddit.customer.reserve.rounge.vo.RoungeVO">
+        SELECT 
+        b.*, 
+        R.RG_NAME
+		    FROM (
+		        SELECT 
+		            a.*, row_number() over(order by a.rr_no desc) rnum
+		        FROM (
+		            SELECT 
+		                RR.RR_NO, RR.RG_NO, RR.RR_NAME, RR.RR_TEL, RR.RR_COUNT, RR.RR_STATUS, 
+		                RR.RR_COST, RR.RR_DATE, RR.RR_WAY, 
+		                RR.CUS_NO
+		            FROM RG_RESERVATION RR
+		            WHERE 1=1
+		            <include refid="search"/>
+		            ORDER BY RR.RR_NO DESC 
+		        ) a
+		    ) b
+		    LEFT JOIN ROUNGE R ON b.RG_NO = R.RG_NO 
+		    <![CDATA[
+		        WHERE b.rnum >= #{startRow} AND b.rnum <= #{endRow} 
+		    ]]>
+		    ORDER BY b.RR_NO DESC
+    </select>
+
+ 	<select id="count" parameterType="kr.or.ddit.util.vo.PaginationVO" resultType="int">
+    	SELECT COUNT(RR_NO)
+        FROM RG_RESERVATION
+        WHERE 1=1
+        <include refid="search"/>
+    </select>
+ 	
+ 	<update id="status" parameterType="kr.or.ddit.customer.reserve.rounge.vo.RoungeVO">
+		UPDATE RG_RESERVATION
+		SET RR_STATUS = 'N'
+		WHERE RR_NO = #{rrNo}
+ 	</update>
+ 	
+
+<select id="count1" resultType="kr.or.ddit.customer.reserve.rounge.vo.RoungeVO">
+    SELECT 
+        SUM(CASE WHEN RR_STATUS = 'Y' THEN 1 ELSE 0 END) AS countY,
+        SUM(CASE WHEN RR_STATUS = 'N' THEN 1 ELSE 0 END) AS countN,
+        SUM(CASE WHEN RR_STATUS = 'Y' THEN RR_COST ELSE 0 END) AS totalCost, 
+        COUNT(RR_NO) AS totalCount
+    FROM RG_RESERVATION
+    WHERE 1=1
+</select>
+
+	<select id="selectRoungeReserveList" resultType="kr.or.ddit.customer.reserve.rounge.vo.RoungeVO">
+	
+	  SELECT 
+        b.*, 
+        R.RG_NAME
+		    FROM (
+		        SELECT 
+		            a.*, row_number() over(order by a.rr_no desc) rnum
+		        FROM (
+		            SELECT 
+		                RR.RR_NO, RR.RG_NO, RR.RR_NAME, RR.RR_TEL, RR.RR_COUNT, RR.RR_STATUS, 
+		                RR.RR_COST, RR.RR_DATE, RR.RR_WAY, 
+		                RR.CUS_NO
+		            FROM RG_RESERVATION RR
+		            WHERE 1=1
+
+		            ORDER BY RR.RR_NO DESC 
+		        ) a
+		    ) b
+		    LEFT JOIN ROUNGE R ON b.RG_NO = R.RG_NO
+	
+	</select>
+
+
+
+
+ </mapper>

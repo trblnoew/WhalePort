@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+ <mapper namespace="kr.or.ddit.customer.map.mapper.IMapMapper">
+ 
+    <select id="partnerList" resultType="kr.or.ddit.customer.map.vo.PartnerVO">
+	    select
+	        pt_no, pt_name, pt_xpos, pt_ypos
+	    from partner
+	    where pt_xpos is not null
+	    order by pt_name asc
+	</select>
+	
+	<select id="pointList" resultType="kr.or.ddit.customer.map.vo.PointVO">
+	    select
+	        point_no, point_name, point_x, point_y
+	    from pointer
+	    where point_x is not null
+	    order by point_no asc
+	</select>
+	
+	<update id="countUp" parameterType="String">
+		update partner
+		set pt_count = pt_count + 1
+		where pt_no = #{ptNo}
+	</update>
+	 
+ </mapper>

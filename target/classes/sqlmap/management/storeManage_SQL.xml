@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  <mapper namespace="kr.or.ddit.management.partner.partner.mapper.IStoreManagementMapper" >
+  	
+  	<sql id="storeSearch">
+  		<if test="searchWord !=null">
+  		 and (PT_NAME like '%'||#{searchWord}||'%')
+  		</if>
+  	</sql>
+
+  
+  	<select id="selectStoreCount" parameterType="kr.or.ddit.util.vo.PaginationVO" resultType="int">
+  		select count(PT_NO)
+  		from PARTNER
+  		where 1=1 AND PT_CODE = 'PRM04'
+  		<include refid="storeSearch" />
+  	</select>
+
+	<select id="selectStoreList" parameterType="kr.or.ddit.util.vo.PaginationVO" resultType="kr.or.ddit.partner.common.account.vo.PartnerVO">
+		select
+			b.*
+		from(
+			select
+				a.*, row_number() over(order by a.PT_NO desc) rnum
+			from(	
+				select
+					PT_NO,
+					PT_MONEY,
+					PT_NAME,
+					PT_STARTDATE,
+					PT_ENDDATE,
+					PT_BUSNUM,
+					PT_ID,
+					PT_PW,
+					PT_FILECODE,
+					PT_IMAGE,
+					PT_XPOS,
+					PT_YPOS,
+					PT_OPENDATE,
+					PT_CODE,
+					PT_ADD,
+					PT_ADD2,
+					PT_POSTCODE,
+					PT_APPROVAL,
+					PT_REJECT,
+					PT_MGRNAME,
+					PT_MGREMAIL,
+					PT_MGRTEL,
+					PT_CEO,
+					PT_TIME1,
+					PT_TIME2,
+					PT_DETAIL,
+					PT_CATEGORY1,
+					PT_CATEGORY2
+				from PARTNER
+				where 1=1 AND PT_CODE = 'PRM04'
+				<include refid="storeSearch"/>
+				order by PT_NO desc
+			) a
+		) b
+		<![CDATA[
+		where b.rnum >= #{startRow} and b.rnum <=#{endRow}
+		]]>
+	</select>  	
+	
+	<select id="selectStore" parameterType="int" resultType="kr.or.ddit.partner.common.account.vo.PartnerVO">
+		select
+			PT_NO,
+			PT_MONEY,
+			PT_NAME,
+			PT_STARTDATE,
+			PT_ENDDATE,
+			PT_BUSNUM,
+			PT_ID,
+			PT_PW,
+			PT_FILECODE,
+			PT_IMAGE,
+			PT_XPOS,
+			PT_YPOS,
+			PT_OPENDATE,
+			PT_CODE,
+			PT_ADD,
+			PT_ADD2,
+			PT_POSTCODE,
+			PT_APPROVAL,
+			PT_REJECT,
+			PT_MGRNAME,
+			PT_MGREMAIL,
+			PT_MGRTEL,
+			PT_CEO,
+			PT_TIME1,
+			PT_TIME2,
+			PT_DETAIL,
+			PT_CATEGORY1,
+			PT_CATEGORY2
+		from PARTNER
+		where PT_NO = #{ptNo} AND PT_CODE = 'PRM04'
+	
+	</select>
+	
+	
+	<update id="insertStore" parameterType="kr.or.ddit.partner.common.account.vo.PartnerVO">
+		update PARTNER
+		set 
+			PT_CATEGORY1 = #{ptCategory1},
+			PT_CATEGORY2 = #{ptCategory2},
+			PT_TIME1 = #{ptTime1},
+			PT_TIME2 = #{ptTime2},
+			PT_DETAIL = #{ptDetail}
+		where PT_NO = #{ptNo}
+		
+	</update>
+	
+	
+	
+	
+	
+	
+	
+  
+  
+  </mapper>

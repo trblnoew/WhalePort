@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.common.mypage.mapper.CommMyPageMapper">
+	<!-- 직원 프로필 조회 -->
+	<select id="selectProfile" parameterType="kr.or.ddit.common.login.vo.LoginCommonVO" resultType="kr.or.ddit.common.login.vo.LoginCommonVO">
+ 		SELECT
+			m.EMP_NO
+			, EMP_ID
+			, EMP_PW
+			, EMP_DEPW
+			, EMP_NAME
+			, EMP_BIRTH
+			, EMP_EMAIL
+			, EMP_TEL
+			, EMP_ADDR
+			, EMP_ADDR2
+			, EMP_POSTCODE
+			, EMP_DEPT
+			, EMP_QR
+			, EMP_CARMODEL
+			, EMP_CARNUM
+			, EMP_STARTDATE
+			, EMP_POSITION
+			, EMP_IMAGE
+			, EMP_APPROVAL
+			, EMP_REJECT
+			, AUTH_NAME
+		FROM
+		    EMPLOYEE m LEFT OUTER JOIN EMPLOYEE_AUTH a ON(m.EMP_NO = a.EMP_NO)
+		WHERE EMP_ID = #{empId}
+	</select>
+		
+	<!-- 직원 프로필 수정 -->
+	<update id="updateProfile" parameterType="kr.or.ddit.common.login.vo.LoginCommonVO">
+	    UPDATE EMPLOYEE
+	    SET 
+	        EMP_NAME = #{empName}
+	      , EMP_PW = #{empPw}
+	      , EMP_DEPW = #{empDepw}
+	      , EMP_EMAIL = #{empEmail}
+	      , EMP_BIRTH = #{empBirth}
+	      , EMP_TEL = #{empTel}
+	      , EMP_POSTCODE = #{empPostcode}
+	      , EMP_ADDR = #{empAddr}
+	      , EMP_ADDR2 = #{empAddr2}
+	      <if test="empImage != null and empImage != ''">
+	        , EMP_IMAGE = #{empImage}
+	      </if>
+	      <if test="empCarnum != null and empCarnum != ''">
+	        , EMP_CARNUM = #{empCarnum}
+	        , EMP_CARMODEL = #{empCarmodel}
+	      </if>
+	    WHERE EMP_ID = #{empId}
+	</update>
+</mapper>

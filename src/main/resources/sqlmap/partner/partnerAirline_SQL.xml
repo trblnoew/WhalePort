@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  <mapper namespace="kr.or.ddit.partner.airline.mapper.IAirlineMapper" >
+  	
+  	<sql id="airportPtSearch">
+	    <if test="searchWord != null">
+	        AND (
+	            SC_BOARDING LIKE '%' || #{searchWord} || '%' 
+	            OR SC_ARRIVED LIKE '%' || #{searchWord} || '%' 
+	            OR SC_AIRLINE LIKE '%' || #{searchWord} || '%'
+	        )
+	    </if>
+	</sql>
+  	
+  	
+  	<select id="getMySchedule" parameterType="kr.or.ddit.management.partner.airportSchedule.vo.PaginationInfoVO" resultType="kr.or.ddit.customer.airport.airportReserve.vo.PlaneScheduleVO">
+	    SELECT 
+	        b.*
+	    FROM (
+	        SELECT 
+	            a.*, 
+	            row_number() over(order by a.sc_stdate asc) rnum
+	        FROM (
+	            SELECT 
+	                sc_no, sc_airfln, sc_airline, sc_boarding, sc_arrived, sc_stdate, sc_std, sc_gate, sc_checkin, sc_seatqty, sc_price, sc_image
+	            FROM 
+	                plane_schedule
+	            WHERE 
+	                sc_airline = #{scAirline}
+	            <if test="scStdate != null and !scStdate.equals('')">
+	                AND sc_stdate BETWEEN TO_DATE(#{scStdate}, 'YYYY/MM/DD HH24:MI') 
+	                AND TO_DATE(#{scStd}, 'YYYY/MM/DD HH24:MI')
+	            </if>
+	            <include refid="airportPtSearch" />
+	        ) a
+	    ) b
+	    	    <![CDATA[
+	    WHERE 
+	        b.rnum >= #{startRow} AND b.rnum <= #{endRow}
+	    ORDER BY 
+	        b.sc_stdate ASC
+	        	    ]]>
+	</select>
+
+  	
+  	<select id="dataCnt" resultType="int" parameterType="kr.or.ddit.management.partner.airportSchedule.vo.PaginationInfoVO">
+  		select count(sc_no)
+		from plane_schedule
+		where sc_airline = #{scAirline}
+		<if test="scStdate != null and !scStdate.equals('')">
+	                AND sc_stdate BETWEEN TO_DATE(#{scStdate}, 'YYYY/MM/DD HH24:MI') 
+	                AND TO_DATE(#{scStd}, 'YYYY/MM/DD HH24:MI')
+		</if>
+		order by sc_stdate asc
+  	</select>
+  	
+  	
+  </mapper>

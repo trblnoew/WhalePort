@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  <mapper namespace="kr.or.ddit.management.partner.airportSchedule.mapper.AirportMapper" >
+  	
+  	
+  	<sql id="airportSearch">
+	    <if test="searchWord != null">
+	        AND (
+	            ps.SC_BOARDING LIKE '%' || #{searchWord} || '%' 
+	            OR ps.SC_ARRIVED LIKE '%' || #{searchWord} || '%' 
+	            OR ps.SC_AIRLINE LIKE '%' || #{searchWord} || '%'
+	        )
+	    </if>
+	</sql>
+
+  
+  
+  	<select id="dataCnt" resultType="int" parameterType="kr.or.ddit.management.partner.airportSchedule.vo.PaginationInfoVO">
+  		SELECT 
+	        COUNT(*) AS flight_count
+	    FROM (
+	        SELECT 
+	            ps.SC_AIRLINE,
+	            ps.SC_BOARDING,
+	            ps.SC_ARRIVED
+	        FROM 
+	            PLANE_SCHEDULE ps
+	        LEFT JOIN 
+	            IATA_CODE boarding_info 
+	        ON 
+	        <![CDATA[
+	            (CASE 
+	                WHEN ps.SC_BOARDING = 'ICN' THEN ps.SC_ARRIVED
+	                ELSE ps.SC_BOARDING
+	            END) = boarding_info.IC_CODE
+	        WHERE 1=1 and
+	            (ps.SC_BOARDING <> 'ICN' OR ps.SC_ARRIVED <> 'ICN')
+	        ]]>	
+	        <include refid="airportSearch" />
+	        GROUP BY 
+	            ps.SC_AIRLINE,
+	            ps.SC_BOARDING,
+	            ps.SC_ARRIVED,
+	            boarding_info.ic_country, 
+	            boarding_info.ic_kr,
+	            boarding_info.ic_distance
+	    ) subquery
+  	</select>
+  	
+	<insert id="insert" parameterType="kr.or.ddit.customer.airport.airportReserve.vo.PlaneScheduleVO">
+		insert into plane_schedule(
+			SC_NO, SC_AIRFLN, SC_AIRLINE, SC_BOARDING, SC_ARRIVED, SC_STDATE, SC_STD
+		) values (
+			seq_plane_schedule.nextval, #{scAirfln}, #{scAirline}, #{scBoarding}, #{scArrived}, #{scStdate}, #{scStd}
+		)
+		
+	</insert>  
+
+	<select id="getData" resultType="kr.or.ddit.customer.airport.airportReserve.vo.PlaneScheduleVO" parameterType="kr.or.ddit.management.partner.airportSchedule.vo.PaginationInfoVO">
+	    SELECT 
+	        b.*
+	    FROM (
+	        SELECT 
+	            a.*, row_number() over(order by a.sc_price, a.SC_AIRLINE, a.SC_BOARDING, a.SC_ARRIVED) rnum
+	        FROM (
+	            SELECT 
+	                ps.SC_AIRLINE,
+	                ps.SC_BOARDING,
+	                ps.SC_ARRIVED,
+	                COALESCE(boarding_info.ic_country, '') AS country,
+	                COALESCE(boarding_info.ic_kr, '') AS airport_name,
+	                COALESCE(boarding_info.ic_distance, 0) AS ic_distance,
+	                COUNT(*) AS flight_count,
+	                MIN(ps.SC_CITY) AS sc_city,
+	                MIN(ps.SC_LINE) AS sc_line,
+	                MIN(ps.SC_GATE) AS sc_gate,
+	                MIN(ps.SC_CHECKIN) AS sc_checkin,
+	                NVL(AVG(ps.SC_PRICE), 0) AS sc_price,
+	                MIN(ps.SC_STDATE) AS sc_stdate,
+	                MAX(ps.SC_STDATE) AS sc_std,
+	                ps.SC_IMAGE
+	            FROM 
+	                PLANE_SCHEDULE ps
+	            LEFT JOIN 
+	                IATA_CODE boarding_info 
+	            ON 
+	            <![CDATA[
+	                (CASE 
+	                    WHEN ps.SC_BOARDING = 'ICN' THEN ps.SC_ARRIVED
+	                    ELSE ps.SC_BOARDING
+	                END) = boarding_info.IC_CODE
+	            WHERE 1=1 and
+	                (ps.SC_BOARDING <> 'ICN' OR ps.SC_ARRIVED <> 'ICN')
+	            ]]> 
+	             <include refid="airportSearch"/>
+	            GROUP BY 
+	                ps.SC_AIRLINE,
+	                ps.SC_BOARDING,
+	                ps.SC_ARRIVED,
+	                ps.SC_IMAGE,
+	                boarding_info.ic_country, 
+	                boarding_info.ic_kr,
+	                boarding_info.ic_distance
+	        ) a
+	    ) b
+	    <![CDATA[
+	        WHERE b.rnum >= #{startRow} AND b.rnum <= #{endRow}
+	        ORDER BY b.sc_price
+	    ]]>
+	</select>
+
+  
+  	<update id="commitData" parameterType="kr.or.ddit.customer.airport.airportReserve.vo.PlaneScheduleVO">
+  		update plane_schedule
+  		set 
+  			sc_price = #{scPrice},
+  			sc_gate = #{scGate},
+  			sc_checkin = #{scCheckin}
+  		where
+  			sc_airline = #{scAirline} and
+  			sc_boarding = #{scBoarding} and
+  			sc_arrived = #{scArrived}
+  	</update>
+  
+  
+
+  	
+  </mapper>
+  
+  
+   		
+   		

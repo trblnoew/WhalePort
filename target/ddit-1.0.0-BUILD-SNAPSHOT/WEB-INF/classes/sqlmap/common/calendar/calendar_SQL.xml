@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  <mapper namespace="kr.or.ddit.common.etc.calendar.mapper.CalendarMapper" >
+  	<!-- 일정 조회 -->
+  	<select id="calendarList" parameterType="kr.or.ddit.common.etc.calendar.vo.CalendarVO" resultType="kr.or.ddit.common.etc.calendar.vo.CalendarVO">
+  		SELECT
+			CAL_NO
+		  , CAL_TITLE
+		  , CAL_STARTDATE
+		  , CAL_ENDDATE
+		  , CAL_TYPE
+		  , CAL_DIV
+		FROM CALENDAR
+		WHERE EMP_NO = #{empNo}
+		<if test="calDiv != null and calDiv != ''">
+        	AND CAL_DIV = #{calDiv}
+    	</if>
+  	</select>
+  
+  	<!-- 일정 등록 -->
+  	<insert id="addEvent" parameterType="kr.or.ddit.common.etc.calendar.vo.CalendarVO">
+  		<selectKey keyProperty="calNo" resultType="int" order="BEFORE">
+  			SELECT SEQ_CALENDAR.NEXTVAL FROM DUAL
+  		</selectKey>
+  		INSERT INTO CALENDAR(
+  			CAL_NO
+  		  , CAL_TITLE
+  		  , CAL_STARTDATE
+  		  , CAL_ENDDATE
+  		  , CAL_TYPE
+  		  , CAL_DIV
+  		  , EMP_NO
+  		)VALUES(
+  			#{calNo}
+  		  , #{calTitle}
+  		  , #{calStartdate}
+  		  , #{calEnddate}
+  		  , #{calType}
+  		  , #{calDiv}
+  		  , #{empNo}
+  		)
+  	</insert>
+  	
+  	<!-- 일정 상세조회 -->
+<!--   	<select id="calendarDetail" parameterType="int" resultType="kr.or.ddit.common.etc.calendar.vo.CalendarVO"> -->
+<!--   		SELECT -->
+<!-- 			CAL_NO -->
+<!-- 		  , CAL_TITLE -->
+<!-- 		  , CAL_STARTDATE -->
+<!-- 		  , CAL_ENDDATE -->
+<!-- 		  , CAL_TYPE -->
+<!-- 		FROM CALENDAR -->
+<!-- 		WHERE EMP_NO = #{empNo} -->
+<!-- 		AND CAL_NO = #{calNo} -->
+<!--   	</select> -->
+  	
+  	<!-- 일정 변경 -->
+  	<update id="calendarUpdate" parameterType="kr.or.ddit.common.etc.calendar.vo.CalendarVO">
+  		UPDATE CALENDAR
+  			SET 
+  				CAL_TITLE = #{calTitle}
+  			  , CAL_STARTDATE = #{calStartdate}
+  			  , CAL_ENDDATE = #{calEnddate}
+  			  , CAL_TYPE = #{calType}
+  			  , CAL_DIV = #{calDiv}
+			WHERE CAL_NO = #{calNo}
+			AND EMP_NO = #{empNo}
+  	</update>
+  	
+  	<!-- 일정 삭제 -->
+  	<delete id="calendarDelete" parameterType="int">
+  		DELETE FROM CALENDAR
+  		WHERE CAL_NO = #{calNo}
+  		AND EMP_NO = #{empNo}
+  	</delete>
+  </mapper>

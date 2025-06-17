@@ -1,0 +1,316 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  <mapper namespace="kr.or.ddit.partner.common.account.mapper.PartnerAccountMapper">
+  
+	<resultMap type="kr.or.ddit.partner.common.account.vo.PartnerVO" id="partnerMap">
+		<result property="ptNo" column="pt_no" />
+		<result property="ptMoney" column="pt_money" />
+		<result property="ptName" column="pt_name" />
+		<result property="ptStartdate" column="pt_startdate" />
+		<result property="ptEnddate" column="pt_enddate" />
+		<result property="ptBusnum" column="pt_busnum" />
+		<result property="ptId" column="pt_id" />
+		<result property="ptPw" column="pt_pw" />
+		<result property="ptFilecode" column="pt_filecode" />
+		<result property="ptImage" column="pt_image" />
+		<result property="ptXpos" column="pt_xpos" />
+		<result property="ptYpos" column="pt_ypos" />
+		<result property="ptOpendate" column="pt_opendate" />
+		<result property="ptCode" column="pt_code" />
+		<result property="ptAdd" column="pt_add" />
+		<result property="ptAdd2" column="pt_add2" />
+		<result property="ptPostcode" column="pt_postcode" />
+		<result property="ptApproval" column="pt_approval" />
+		<result property="ptReject" column="pt_reject" />
+		<result property="ptMgrname" column="pt_mgrname" />
+		<result property="ptMgremail" column="pt_mgremail" />
+		<result property="ptMgrtel" column="pt_mgrtel" />
+		<result property="ptCeo" column="pt_ceo" />
+		<result property="comdName" column="comd_name" />
+		<collection property="ptFileList" resultMap="fileMap"/>
+	</resultMap>
+	
+	 <resultMap type="kr.or.ddit.util.vo.FileVO" id="fileMap">
+  	 	<id property="fileNo" column="file_no" />
+		<result property="fileNo" column="file_no" />
+		<result property="fileOwner" column="file_owner" />
+		<result property="fileSavepath" column="file_savepath" />
+		<result property="fileSize" column="file_size" />
+		<result property="fileMime" column="file_mime" />
+		<result property="fileRealname" column="file_realname" />
+		<result property="fileSavename" column="file_savename" />
+		<result property="fileSavedate" column="file_savedate" />
+		<result property="fileDelyn" column="file_delyn" />
+		<result property="fileDowncount" column="file_downcount" />
+		<result property="fileFancysize" column="file_fancysize" />
+  	 </resultMap>
+  
+	<sql id="search">
+	    <if test="searchWord != null and searchWord != ''">
+	        and (
+	            pt_name like '%' || #{searchWord} || '%' or 
+	            pt_busnum like '%' || #{searchWord} || '%'
+	        )
+	    </if>
+		<if test="selectedItem != null and selectedItem != ''">
+		    and (
+		        pt_approval = #{selectedItem} or
+		        pt_code = #{selectedItem}
+		    )
+		</if>
+	</sql>
+	
+     <select id="list" parameterType="kr.or.ddit.util.vo.PaginationVO" resultType="kr.or.ddit.partner.common.account.vo.PartnerVO">
+        SELECT 
+            b.*
+        FROM (
+            SELECT 
+                a.*, row_number() over(order by a.pt_no asc) rnum
+            FROM (
+                SELECT 
+					CDC.COMD_NAME, 
+                    PT.PT_NO, PT.PT_NAME, PT.PT_BUSNUM, PT_CODE, PT_APPROVAL, PT_OPENDATE, PT_CEO, PT_MGRTEL
+				FROM PARTNER PT LEFT OUTER JOIN COMMON_DETAIL_CODE CDC ON(PT.PT_CODE = CDC.COMD_CODE)
+                WHERE 1=1
+                <include refid="search"/>
+               ORDER BY PT.PT_NO ASC
+            ) a
+        ) b
+        <![CDATA[
+             WHERE b.rnum >= #{startRow} AND b.rnum <= #{endRow} 
+         ]]> 
+    </select>
+	
+     <select id="list2" resultType="kr.or.ddit.partner.common.account.vo.PartnerVO">
+				SELECT 
+                    PT_NO, PT_NAME, PT_BUSNUM, PT_CODE, PT_APPROVAL
+				FROM PARTNER
+                WHERE PT_CODE = 'PRM03'
+                AND PT_APPROVAL = 'Y'
+                ORDER BY PT_NO ASC
+    </select>
+
+ 	<insert id="register" parameterType="kr.or.ddit.partner.common.account.vo.PartnerVO" useGeneratedKeys="true">
+ 	 	<selectKey keyProperty="ptNo" resultType="int" order="BEFORE"  >
+			select SEQ_PARTNER.NEXTVAL from dual
+		</selectKey>
+ 		INSERT INTO PARTNER(
+ 			PT_NO, PT_CODE, PT_BUSNUM, PT_NAME, PT_CEO, PT_OPENDATE, PT_POSTCODE, PT_ADD, PT_ADD2, PT_MGRNAME, PT_MGREMAIL, PT_MGRTEL, PT_APPROVAL, PT_FILECODE, PT_IMAGE  
+ 		)VALUES(
+ 			#{ptNo}, #{ptCode}, #{ptBusnum}, #{ptName}, #{ptCeo}, #{ptOpendate}, #{ptPostcode}, #{ptAdd}, #{ptAdd2}, #{ptMgrname}, #{ptMgremail}, #{ptMgrtel}, 'H', #{ptFilecode}, #{ptImage} 
+ 		)
+ 	</insert>
+ 	
+ 	<insert id="insertPtFile" parameterType="kr.or.ddit.util.vo.FileVO">
+ 	 	<selectKey keyProperty="fileNo" resultType="int" order="BEFORE">
+	 		select SEQ_FILE.nextval from dual
+	 	</selectKey>
+   		  insert into FILE_DATA(
+		  	FILE_NO,
+			FILE_OWNER,
+			FILE_SAVEPATH, 
+			FILE_SIZE,
+			FILE_MIME,
+			FILE_REALNAME,
+			FILE_SAVENAME,
+			FILE_SAVEDATE,
+			FILE_DELYN,
+			FILE_DOWNCOUNT,
+			FILE_FANCYSIZE
+		  )VALUES(
+		  	#{fileNo},
+			#{fileOwner},
+			#{fileSavepath},
+			#{fileSize},
+			#{fileMime},
+			#{fileRealname},
+			#{fileSavename},
+			sysdate,
+			'N',
+			0,
+			#{fileFancysize}
+		  )
+	</insert>
+
+
+ 	<select id="accountCount" parameterType="kr.or.ddit.util.vo.PaginationVO" resultType="int">
+    	SELECT COUNT(PT_NO)
+        FROM PARTNER
+        WHERE 1=1
+        <include refid="search"/>
+    </select>
+    
+    <select id="detail" parameterType="kr.or.ddit.partner.common.account.vo.PartnerVO" resultMap="partnerMap">
+		SELECT * FROM
+              (SELECT
+			PT.PT_NO, PT.PT_NAME, PT.PT_BUSNUM, PT.PT_CODE, PT.PT_APPROVAL, PT.PT_OPENDATE, CDC.COMD_NAME, PT.PT_CEO, PT.PT_POSTCODE, PT.PT_ADD, PT.PT_ADD2, PT.PT_REJECT, 
+			PT.PT_MGRNAME, PT.PT_MGREMAIL, PT.PT_MGRTEL, PT.PT_ID, PT.PT_STARTDATE, PT.PT_ENDDATE, PT.PT_FILECODE, PT.PT_MONEY, PT.PT_IMAGE
+		FROM PARTNER PT, COMMON_DETAIL_CODE CDC
+		WHERE PT.PT_CODE = CDC.COMD_CODE
+		AND PT.PT_NO = #{ptNo}) N LEFT OUTER JOIN FILE_DATA FD
+		ON FD.FILE_OWNER = #{fileOwner}
+ 	</select>
+ 	
+ 	<update id="approve" parameterType="kr.or.ddit.partner.common.account.vo.PartnerVO">
+		UPDATE PARTNER
+		SET PT_APPROVAL = #{ptApproval},
+			PT_REJECT = #{ptReject}
+		WHERE PT_NO = #{ptNo}
+ 	</update>
+ 	
+ 	<update id="idIssue" parameterType="kr.or.ddit.partner.common.account.vo.PartnerVO">
+		UPDATE PARTNER
+		SET PT_ID = #{ptId},
+			PT_PW = #{ptPw}
+		WHERE PT_NO = #{ptNo}
+ 	</update>
+
+ 	<update id="update" parameterType="kr.or.ddit.partner.common.account.vo.PartnerVO">
+	    UPDATE PARTNER PT
+	    SET PT.PT_NAME = #{ptName},
+	        PT.PT_STARTDATE = #{ptStartdate},
+	        PT.PT_ENDDATE = #{ptEnddate},
+	        PT.PT_OPENDATE = #{ptOpendate},
+	        PT.PT_MONEY = #{ptMoney},
+	        PT.PT_BUSNUM = #{ptBusnum},
+	        PT.PT_CEO = #{ptCeo},
+	        PT.PT_ADD = #{ptAdd},
+	        PT.PT_ADD2 = #{ptAdd2},
+	        PT.PT_MGRNAME = #{ptMgrname},
+	        PT.PT_MGREMAIL = #{ptMgremail},
+	        PT.PT_MGRTEL = #{ptMgrtel},
+	        PT.PT_CODE = #{ptCode},
+	        PT.PT_FILECODE = #{ptFilecode},
+	        PT.PT_IMAGE = #{ptImage}
+	    WHERE PT.PT_NO = #{ptNo}
+ 	</update>
+ 	
+	<select id="count" resultType="kr.or.ddit.partner.common.account.vo.PartnerVO">
+	    SELECT 
+	        SUM(CASE WHEN PT_APPROVAL = 'Y' THEN 1 ELSE 0 END) AS countY,
+	        SUM(CASE WHEN PT_APPROVAL = 'N' THEN 1 ELSE 0 END) AS countN,
+	        SUM(CASE WHEN PT_APPROVAL = 'H' THEN 1 ELSE 0 END) AS countH,
+	        COUNT(PT_NO) AS totalCount
+	    FROM PARTNER
+	    WHERE 1=1
+	</select>
+	
+	 <select id="ptDownload" parameterType="int" resultType="kr.or.ddit.util.vo.FileVO">
+		SELECT 
+		  	FILE_NO,
+			FILE_OWNER,
+			FILE_SAVEPATH,
+			FILE_SIZE,
+			FILE_MIME,
+			FILE_REALNAME,
+			FILE_SAVENAME,
+			FILE_SAVEDATE,
+			FILE_DELYN,
+			FILE_DOWNCOUNT,
+			FILE_FANCYSIZE
+		FROM FILE_DATA
+	  	WHERE FILE_NO = #{fileNo}
+	  </select>
+	  
+	  <update id="incrementPtFileDown" parameterType="int">
+	  	UPDATE FILE_DATA
+	  	SET
+	  		FILE_DOWNCOUNT = FILE_DOWNCOUNT+1
+	  	WHERE FILE_NO = #{fileNo}
+	  </update>
+	  
+	  <select id="selectPtFile" parameterType="int" resultType="kr.or.ddit.util.vo.FileVO">
+	  	select
+			FILE_OWNER,
+			FILE_SAVEPATH,
+			FILE_SIZE,
+			FILE_MIME,
+			FILE_REALNAME,
+			FILE_SAVENAME,
+			FILE_SAVEDATE,
+			FILE_DELYN,
+			FILE_DOWNCOUNT,
+			FILE_FANCYSIZE
+		FROM FILE_DATA
+		WHERE FILE_NO = #{fileNo}
+	  </select>
+	  
+	  <delete id="deletePtFile" parameterType="int">
+	  	DELETE FROM FILE_DATA
+	  	WHERE FILE_NO = #{fileNo}
+	  </delete>
+	
+	<!--  협력업체 로그인 -->
+	<select id="partnerLogin" resultType="kr.or.ddit.partner.common.account.vo.PartnerVO">
+		SELECT
+		    PT_NO
+		  , PT_MONEY
+		  , PT_NAME
+		  , PT_STARTDATE
+		  , PT_ENDDATE
+		  , PT_BUSNUM
+		  , PT_ID
+		  , PT_PW
+		  , PT_FILECODE
+		  , PT_IMAGE
+		  , PT_OPENDATE
+		  , PT_CODE
+		  , PT_ADD
+		  , PT_ADD2
+		  , PT_POSTCODE
+		  , PT_APPROVAL
+		  , PT_REJECT
+		  , PT_MGRNAME
+		  , PT_MGREMAIL
+		  , PT_MGRTEL
+		  , PT_CEO
+		FROM PARTNER
+		WHERE PT_ID = #{ptId}
+		AND PT_PW = #{ptPw}
+	</select>
+	
+	<!--  협력업체 원 차트 -->
+	<select id="pieChart" resultType="kr.or.ddit.partner.common.account.vo.PartnerVO">
+		SELECT 
+		    COUNT(CASE WHEN PT_CODE = 'PRM01' THEN 1 END) AS countPrm01,
+		    COUNT(CASE WHEN PT_CODE = 'PRM02' THEN 1 END) AS countPrm02,
+		    COUNT(CASE WHEN PT_CODE = 'PRM03' THEN 1 END) AS countPrm03,
+		    COUNT(CASE WHEN PT_CODE = 'PRM04' THEN 1 END) AS countPrm04
+		FROM 
+		    PARTNER
+	</select>
+	
+	<!--  협력업체 바 차트 -->
+	<select id="thisBarChart" resultType="int">
+	    SELECT
+	    COALESCE(COUNT(p.PT_STARTDATE), 0) AS countMonth
+	FROM 
+	    (SELECT LEVEL AS month FROM dual CONNECT BY LEVEL &lt;= 12) m
+	LEFT JOIN 
+	    PARTNER p ON EXTRACT(MONTH FROM p.PT_STARTDATE) = m.month 
+	    AND EXTRACT(YEAR FROM p.PT_STARTDATE) = EXTRACT(YEAR FROM SYSDATE)
+	GROUP BY 
+	    m.month
+	ORDER BY 
+	    m.month
+	</select>
+
+	
+	<!--  협력업체 바 차트 -->
+	<select id="preBarChart" resultType="int">
+	    SELECT
+	    COALESCE(COUNT(p.PT_STARTDATE), 0) AS countMonth
+	FROM 
+	    (SELECT LEVEL AS month FROM dual CONNECT BY LEVEL &lt;= 12) m
+	LEFT JOIN 
+	    PARTNER p ON EXTRACT(MONTH FROM p.PT_STARTDATE) = m.month 
+	    AND EXTRACT(YEAR FROM p.PT_STARTDATE) = EXTRACT(YEAR FROM SYSDATE) - 1
+	GROUP BY 
+	    m.month
+	ORDER BY 
+	    m.month
+	</select>
+
+ </mapper>

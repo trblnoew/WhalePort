@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.management.airService.customerManagement.mapper.CustomerReserveMapper">
+
+    <!-- 레디얼 차트 - 호텔 총 매출 -->
+    <select id="radialCapsuleHotel" resultType="kr.or.ddit.management.airService.customerManagement.vo.HotelReservationVO">
+        SELECT NVL(SUM(HR_COST), 0) AS hrCost
+        FROM HT_RESERVATION
+        WHERE SUBSTR(HR_CHECKIN, 0, 2) = '24'
+    </select>
+
+    <!-- 레디얼 차트 - 라운지 총 매출 -->
+    <select id="radialRounge" resultType="kr.or.ddit.management.airService.customerManagement.vo.RoungeReservationVO">
+        SELECT NVL(SUM(RR_COST), 0) AS rrCost
+        FROM RG_RESERVATION
+        WHERE SUBSTR(RR_DATE, 0, 2) = '24'
+    </select>
+
+    <!-- 레디얼 차트 - 주차장 총 매출 -->
+    <select id="radialParking" resultType="kr.or.ddit.management.airService.customerManagement.vo.ParkingReservationVO">
+        SELECT NVL(SUM(PR_COST), 0) AS prCost
+        FROM PARKING_REC
+        WHERE SUBSTR(PR_ENTRY, 0, 2) = '24'
+    </select>
+    
+    <!-- 레디얼 차트 - 회의실 총 매출 -->
+    <select id="radialMeeting" resultType="kr.or.ddit.management.airService.customerManagement.vo.MeetingReservationVO">
+        SELECT NVL(SUM(MRR_COST), 0) AS mrrCost
+    	FROM MR_RESERVATION
+    	WHERE SUBSTR(MRR_DATE, 0, 2) = '24'
+    </select>
+</mapper>

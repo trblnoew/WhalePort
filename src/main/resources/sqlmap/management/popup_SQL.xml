@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  <mapper namespace="kr.or.ddit.management.airService.popup.mapper.IPopupMapper" >
+  
+  	<sql id="popupSearch">
+  		<if test="searchWord !=null and searchType=='title'">
+  		 and (POP_TITLE like '%'||#{searchWord}||'%')
+  		</if>
+  		<if test="searchWord !=null and searchType=='content'">
+  		 and (POP_CONTENT like '%'||#{searchWord}||'%')
+  		</if>
+  	</sql>
+  
+  	<select id="selectPopupCount" parameterType="kr.or.ddit.util.vo.PaginationVO" resultType="int">
+  		select count(POP_NO)
+  		from POPUP
+  		where 1=1
+  		<include refid="popupSearch"/>
+  	</select>
+
+	<select id="selectPopupList" parameterType="kr.or.ddit.util.vo.PaginationVO" resultType="kr.or.ddit.management.airService.popup.vo.PopupVO">
+		select
+			b.*
+		from(
+			select
+				a.*, row_number() over(order by a.POP_NO desc) rnum
+			from(	
+				select
+					POP_NO,
+					POP_TITLE,
+					POP_CONTENT,
+					POP_GOAL,
+					POP_STARTDATE,
+					POP_ENDDATE,
+					POP_IMG,
+					POP_APPROVAL,
+					POP_REJECT,
+					PT_NO
+				from POPUP
+				where 1=1
+				<include refid="popupSearch"/>
+				order by POP_NO desc
+			) a
+		) b
+		<![CDATA[
+ 		where b.rnum >= #{startRow} and b.rnum <=#{endRow}
+ 		]]> 
+	</select>  	
+	
+	<insert id="insert" parameterType="kr.or.ddit.management.airService.popup.vo.PopupVO" useGeneratedKeys="true"  >
+		<selectKey keyProperty="popNo" resultType="int" order="BEFORE" >
+			select SEQ_POPUP.nextval from dual
+		</selectKey>
+			insert into POPUP(
+				POP_NO,
+				POP_TITLE,
+				POP_CONTENT,
+				POP_GOAL,
+				POP_STARTDATE,
+				POP_ENDDATE,
+				POP_APPROVAL,
+				POP_IMG
+		    ) values (
+			    #{popNo},
+				#{popTitle},
+				#{popContent},
+				#{popGoal},
+				#{popStartdate},
+				#{popEnddate},
+				#{popApproval},
+				#{popImg}
+		    )
+	
+	</insert>
+	<select id="selectPopup" parameterType="int" resultType="kr.or.ddit.management.airService.popup.vo.PopupVO">
+		select 
+				POP_NO,
+				POP_TITLE,
+				POP_CONTENT,
+				POP_GOAL,
+				POP_STARTDATE,
+				POP_ENDDATE,
+				POP_IMG,
+				P.PT_NO,
+				POP_APPROVAL,
+				POP_REJECT,
+                PT_NAME
+        from POPUP U left join PARTNER P
+		on U.PT_NO=P.PT_NO 
+		where POP_NO = #{popNo}
+		
+		
+	</select>
+	
+	<select id="selectPopupPosting" resultType="kr.or.ddit.management.airService.popup.vo.PopupVO">
+		select 				
+				POP_NO,
+				POP_TITLE,
+				POP_CONTENT,
+				POP_GOAL,
+				POP_STARTDATE,
+				POP_ENDDATE,
+				POP_IMG,
+				PT_NO,
+				POP_APPROVAL,
+				POP_REJECT
+                from POPUP where POP_APPROVAL='게시중'
+	</select>
+	
+	
+	
+	
+	
+	
+	<update id="update" parameterType="kr.or.ddit.management.airService.popup.vo.PopupVO">
+		update POPUP
+		set 
+			POP_TITLE = #{popTitle},
+			POP_CONTENT = #{popContent},
+			POP_GOAL = #{popGoal},
+			POP_STARTDATE = #{popStartdate},
+			POP_ENDDATE = #{popEnddate},
+			POP_IMG = #{popImg},
+			POP_APPROVAL = #{popApproval}
+		where POP_NO = #{popNo}
+	</update>
+	
+	<delete id="delete" parameterType="int">
+		delete from POPUP
+		where POP_NO = #{popNo}
+	</delete>
+	
+	<update id="rejectUpate" parameterType="kr.or.ddit.management.airService.popup.vo.PopupVO">
+		UPDATE POPUP SET 
+			POP_REJECT = #{popReject},
+			pop_approval = '반려'
+		WHERE POP_NO =  #{popNo}
+	</update>
+
+	<update id="updateApproval" parameterType="int">
+	
+		UPDATE POPUP SET 
+			pop_approval = '게시중'
+		WHERE POP_NO =  #{popNo}
+	
+	</update>
+	
+	<update id="endPopup">
+		UPDATE POPUP SET 
+			pop_approval = '게시종료'
+		WHERE pop_approval = '게시중'
+	
+	</update>
+
+
+
+
+
+
+  
+  </mapper>

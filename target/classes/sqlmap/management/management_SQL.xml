@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  <mapper namespace="kr.or.ddit.management.human.management.mapper.ManagementMapper" >
+  
+  <sql id="empSearch">
+  		<if test="searchWord != null and searchType == 'all'">
+	        and (
+	            emp_name like '%'||#{searchWord}||'%' or
+	            emp_dept like '%'||#{searchWord}||'%' or
+	            emp_position like '%'||#{searchWord}||'%'
+	        )
+	    </if>
+  		<if test="searchWord != null and searchType == 'name'">
+  			and (emp_name like '%'||#{searchWord}||'%')
+  		</if>
+  		<if test="searchWord != null and searchType == 'dept'">
+  			and (emp_dept like '%'||#{searchWord}||'%')
+  		</if>
+  		<if test="searchWord != null and searchType == 'position'">
+  			and (emp_position like '%'||#{searchWord}||'%')
+  		</if>
+  		<if test="selectedItem != null">
+	    	and (
+	    		emp_approval = #{selectedItem}
+	    	)
+	    </if>
+  	</sql>
+  
+  <select id="selectEmpCount" parameterType="kr.or.ddit.management.human.management.vo.EmployeeVO" resultType="int">
+  		select count(emp_no)
+  		from employee
+  		where 1=1     
+  		<include refid="empSearch"/>
+  	</select>     
+  
+  <select id="selectEmpList" parameterType="kr.or.ddit.management.human.management.vo.EmployeeVO" resultType="kr.or.ddit.management.human.management.vo.EmployeeVO"> 
+  		select
+  			b.*
+  		from (
+	  		select
+	  			a.*, row_number() over (order by a.emp_no desc) rnum
+	  		from (
+		  		select
+		  			emp_no, emp_name, emp_id, emp_dept, emp_position, emp_approval, emp_del, emp_startdate, emp_Image
+		  		from employee
+		  		where 1=1
+		  		<include refid="empSearch"/>
+		  		order by emp_no desc
+		  	) a
+		  ) b
+		  <![CDATA[    
+		  	where b.rnum >= #{startRow} and b.rnum <= #{endRow}
+		  ]]>
+  	</select>
+  
+  	<select id="empList" resultType="kr.or.ddit.management.human.management.vo.EmployeeVO">
+  		SELECT
+		   emp_name, emp_id, emp_dept, emp_position, emp_approval, emp_del, emp_startdate
+		FROM
+		    employee
+  	</select>
+  
+  	<insert id="empRegister" parameterType="kr.or.ddit.management.human.management.vo.EmployeeVO" useGeneratedKeys="true">
+  		<selectKey keyProperty="empNo,empId" resultType="kr.or.ddit.management.human.management.vo.EmployeeVO" order="BEFORE"> 
+  			SELECT seq_employee.NEXTVAL AS empNo, seq_employee_id.NEXTVAL AS empId FROM dual
+  		</selectKey>
+  		INSERT ALL
+	   	INTO employee (
+	        emp_no, emp_id, emp_pw, emp_depw, emp_name, emp_birth, emp_startdate, emp_email, emp_tel, emp_addr, emp_addr2, emp_postcode, emp_dept, emp_position, emp_image
+	    ) VALUES (
+	        #{empNo}, CONCAT('2024', #{empId}), #{empPw}, #{empDepw}, #{empName}, #{empBirth}, sysdate, #{empEmail}, #{empTel}, #{empAddr}, #{empAddr2}, #{empPostcode}, #{empDept}, #{empPosition}, #{empImage}
+	    )
+	    INTO employee_auth (
+	        emp_no, auth_name
+	    ) VALUES (
+	        #{empNo}, 
+	        CASE 
+	            WHEN #{empDept} = '인사부' THEN 'ROLE_HUMAN'
+	            WHEN #{empDept} = '전산부' THEN 'ROLE_INFO'
+	            WHEN #{empDept} = '협력업체 관리부' THEN 'ROLE_PARTNER'
+	            WHEN #{empDept} = '공항서비스 관리부' THEN 'ROLE_SERVICE'
+	            ELSE 'ROLE_ADMIN' 
+	        END
+	    )
+		SELECT * FROM dual
+
+  	</insert>
+  	
+  	<select id="empDetail" parameterType="string" resultType="kr.or.ddit.management.human.management.vo.EmployeeVO">
+  		select emp_no, emp_name, emp_id, emp_dept, emp_birth, emp_email, emp_tel, emp_addr, emp_addr2, emp_postcode, emp_position, emp_approval, emp_reject, emp_del, emp_startdate, emp_carmodel, emp_carnum, emp_image
+			from employee
+		where emp_id = #{empId}
+  	</select>
+  
+  	<update id="empUpdate" parameterType="kr.or.ddit.management.human.management.vo.EmployeeVO">
+  		update employee
+  		set
+  			emp_name = #{empName}, 
+  			emp_email = #{empEmail}, 
+  			emp_dept = #{empDept}, 
+  			emp_tel = #{empTel}, 
+  			emp_position = #{empPosition}, 
+  			emp_addr = #{empAddr}, 
+  			emp_addr2 = #{empAddr2}, 
+  			emp_postcode = #{empPostcode}
+  		where emp_id = #{empId}
+  	</update>
+  	
+  	<update id="authUpdate" parameterType="kr.or.ddit.common.login.vo.LoginCommonAuthVO">
+  		update employee_auth
+  		set
+  			auth_name = #{authName}
+  		where emp_no = #{empNo}
+  	</update>
+  	
+  	<delete id="empDelete" parameterType="string">
+  		update employee
+  		set
+  			emp_approval = 'X',
+  			emp_del = 'Y'
+  		where emp_id = #{empId}
+  	</delete>
+  	
+  	<select id="count" resultType="kr.or.ddit.management.human.management.vo.EmployeeVO">
+  		SELECT 
+	        SUM(CASE WHEN EMP_APPROVAL = 'Y' THEN 1 ELSE 0 END) AS countY,
+	        SUM(CASE WHEN EMP_APPROVAL = 'N' THEN 1 ELSE 0 END) AS countN,
+	        SUM(CASE WHEN EMP_APPROVAL = 'R' THEN 1 ELSE 0 END) AS countR,
+	        SUM(CASE WHEN EMP_APPROVAL = 'X' THEN 1 ELSE 0 END) AS countX,
+	        COUNT(EMP_NO) AS totalCount
+	    FROM EMPLOYEE
+	    WHERE 1=1
+  	</select>
+  	
+<!--   	<select id="selectEmployeeList" resultType="kr.or.ddit.management.human.management.vo.EmployeeVO"> -->
+<!-- 		select -->
+<!--   			emp_no, emp_name, emp_id, emp_dept, emp_position, emp_approval, emp_del, emp_startdate -->
+<!--   		from employee -->
+<!--   		where 1=1 -->
+<!--   		<include refid="empSearch"/> -->
+<!--   		order by emp_no desc -->
+<!--   	</select> -->
+
+  	<select id="selectEmployeeList" resultType="kr.or.ddit.management.human.management.vo.EmployeeVO">
+		select
+  			emp_no, emp_name, emp_id, emp_dept, emp_position, emp_approval, emp_del, emp_startdate
+  		from employee
+  	</select>
+  	
+  	
+  	
+  
+  </mapper>
