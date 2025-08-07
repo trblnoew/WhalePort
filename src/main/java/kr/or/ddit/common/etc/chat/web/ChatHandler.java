@@ -1,10 +1,10 @@
-package kr.or.ddit.common.etc.chat.web;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+
+import javax.inject.Inject;
 
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.CloseStatus;
@@ -14,91 +14,135 @@ import org.springframework.web.socket.handler.TextWebSocketHandler;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import kr.or.ddit.common.etc.chat.service.IChatService;
+import kr.or.ddit.common.etc.chat.vo.ChatMsgVO;
+import kr.or.ddit.common.etc.chat.vo.ChatRoomVO;
 import lombok.extern.slf4j.Slf4j;
 
 @Component
 @Slf4j
 public class ChatHandler extends TextWebSocketHandler {
-    
-//	@Inject
-//	private IChatService chatService;
-	
-    // 현재 접속 중인 사용자 리스트를 관리
-	private static List<WebSocketSession> list = new ArrayList<WebSocketSession>();
-    private Map<String, String> userMap = new ConcurrentHashMap<>(); // sessionId -> userId 매핑
+
+    private static List<WebSocketSession> sessions = new ArrayList<>();
+    private Map<String, String> userMap = new ConcurrentHashMap<>(); // sessionId → userId
     private ObjectMapper objectMapper = new ObjectMapper();
-    
+
+    @Inject
+    private IChatService chatService;
+
     @Override
     public void afterConnectionEstablished(WebSocketSession session) throws Exception {
-    	 
-       String userId = getUserIdFromQuery(session);       
-       session.getAttributes().put("userId", userId);
-       list.add(session);
-       userMap.put(session.getId(), userId);
-       
-       Map<String, Object> msg = new HashMap<>();
-       msg.put("type", "userList");
-       msg.put("list", userMap.values());
-       
-       String message = objectMapper.writeValueAsString(msg);
-       for(WebSocketSession s : list ) {
-    	
-       	   if(s.isOpen()) {
-       		   s.sendMessage(new TextMessage(message));
-       	   }
-       }
-   	   // 모든 사용자에게 업데이트된 유저 리스트 전송
-//       broadcastUserList();
-        
+        String userId = getUserIdFromQuery(session);
+        session.getAttributes().put("userId", userId);
+        sessions.add(session);
+        userMap.put(session.getId(), userId);
+
+        sendUserListToAll(userMap);
     }
 
     @Override
     public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws Exception {
-    	list.remove(session);
+        sessions.remove(session);
         userMap.remove(session.getId());
-        
-        Map<String, Object> msg = new HashMap<>();
-        msg.put("type", "userList");
-        msg.put("list", userMap.values());
-        String message = objectMapper.writeValueAsString(msg);
-        for(WebSocketSession s : list ) {
-     	
-        	if(s.isOpen()) {
-        		   s.sendMessage(new TextMessage(message));
-        	}
-        }
-        
+        sendUserListToAll(userMap);
     }
 
     @Override
     protected void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception {
-        // 클라이언트로부터의 메시지 처리
-    	
-    	
-        String payload = message.getPayload();
-        log.info("Received message: " + payload);
-        // 채팅 메시지를 모든 사용자에게 브로드캐스트
-        for (WebSocketSession s : list) {
+        Map<String, Object> data = objectMapper.readValue(message.getPayload(), Map.class);
+        String type = (String) data.get("type");
+
+        switch (type) {
+            case "chat":
+                handleChatMessage(data);
+                break;
+            case "createRoom":
+                handleCreateRoom(session, data);
+                break;
+            case "createMtRoom":
+                handleCreateMtRoom(data);
+                break;
+            default:
+                log.warn("Unknown message type: " + type);
+        }
+    }
+
+    private void handleChatMessage(Map<String, Object> data) throws Exception {
+        ChatMsgVO msgVO = new ChatMsgVO();
+        msgVO.setChatSender((String) data.get("chatSender"));
+        msgVO.setChatMsg((String) data.get("chatMsg"));
+        msgVO.setRoomNo((Integer) data.get("roomNo"));
+
+        chatService.insertMsg(msgVO);
+
+        broadcast(objectMapper.writeValueAsString(data));
+    }
+
+    private void handleCreateRoom(WebSocketSession session, Map<String, Object> data) throws Exception {
+        List<String> userList = (List<String>) data.get("userList");
+        int roomNo = chatService.createRoom(userList);
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("type", "createRoomResult");
+        result.put("roomNo", roomNo);
+        result.put("userList", userList);
+
+        session.sendMessage(new TextMessage(objectMapper.writeValueAsString(result)));
+    }
+
+    private void handleCreateMtRoom(Map<String, Object> data) throws Exception {
+        ChatRoomVO roomVO = new ChatRoomVO();
+        roomVO.setMyId((String) data.get("myId"));
+        roomVO.setUserId((String) data.get("userId"));
+        roomVO.setRoomName((String) data.get("roomName"));
+
+        chatService.createMtRoom(roomVO);
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("type", "alarm");
+        result.put("userId", roomVO.getMyId());
+
+        broadcast(objectMapper.writeValueAsString(result));
+    }
+
+    private void sendUserListToAll(Map<String, String> userMap) throws Exception {
+    
+    	Map<String, Object> param = new HashMap<>();
+        param.put("type", "userList");
+        param.put("list", userMap.values());
+        param.put("sessionUserId", "");
+        Map<String, Object> userListMessage = new HashMap<>();
+        
+        List<String> userList = chatService.list(param);
+        userListMessage.put("users", userList);
+        List<String> unUserList = chatService.unList(param);
+        userListMessage.put("unUsers", unUserList);
+        
+        String json = objectMapper.writeValueAsString(userListMessage);
+
+        for (WebSocketSession s : sessions) {
             if (s.isOpen()) {
-            	log.info("payload ::: " + new TextMessage(payload));
-                s.sendMessage(new TextMessage(payload));
+                s.sendMessage(new TextMessage(json));
             }
         }
     }
 
-    // 쿼리 파라미터에서 userId 추출
+    private void broadcast(String json) throws Exception {
+        for (WebSocketSession s : sessions) {
+            if (s.isOpen()) {
+                s.sendMessage(new TextMessage(json));
+            }
+        }
+    }
+
     private String getUserIdFromQuery(WebSocketSession session) {
         String query = session.getUri().getQuery();
         if (query != null && query.contains("userId")) {
-            String[] params = query.split("&");
-            for (String param : params) {
-                String[] keyValue = param.split("=");
-                if (keyValue[0].equals("userId")) {
-                    return keyValue[1];
-                }
+            for (String param : query.split("&")) {
+                String[] kv = param.split("=");
+                if (kv[0].equals("userId")) return kv[1];
             }
         }
         return null;
     }
-
 }
