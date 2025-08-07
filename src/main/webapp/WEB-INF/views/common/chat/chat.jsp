@@ -3,6 +3,20 @@
 <%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
 <!DOCTYPE html>
 <html lang="en" dir="ltr" data-bs-theme="light" data-color-theme="Blue_Theme" data-layout="vertical">
+
+<!-- 
+	느낀점
+	css 샀더니 scroll 내가 원하는 방식으로 고치고싶은데 뭐 어디부터 볼지 감도안잡히고
+	그와중에 데이터 늘어나면 UI 답도없이 못생겨지고 Modal에 select2 작동도 제대로 안되고
+	충돌나서 바꾸고자 하는 부분도 잘 안바뀌고
+	학교 프로젝트랑 유니티 같이한다고 제정신 아닌상태로 해서 그런가 코드도 근본부터 개판으로 했고
+	나중에 리벤지 한다 진짜 두고보자
+	
+	근데 망해서 그런가 배운부분도 많은거같고
+	에휴 ㅋㅋ
+	 
+
+ -->
 <style>
    .app-chat{
        height: 614px;
@@ -143,9 +157,18 @@
                     </ul>
                   </div>
                  
+                  
+                  
+                  
+                  
                 </div>
+                
+                
                 <div class="app-chat">
                   <ul class="chat-users mb-0 mh-n100" id="singleMsg" data-simplebar>
+<!--                   <ul class="chat-users mh-n100" data-simplebar> -->
+<!--                      <ul class="chat-users mb-0 mh-n100" data-simplebar> -->
+
                   </ul>
                 </div>
               </div>
@@ -185,6 +208,9 @@
                           <div class="chat-list active-chat">
                            
                           </div>
+                        
+                          
+                          
                           
                         </div>
                         <div class="px-9 py-6 border-top chat-send-message-footer">
@@ -345,8 +371,7 @@ $(function(){
    var myImage = '${user.empImage }';
    
 
-   // 채팅메시지가 있으면 보낸다.
-   msgBox.on('keyup', enterKey);
+   
    
    $('.searchChats').on('click',function(){
       singleRecentMsg();
@@ -407,25 +432,6 @@ $(function(){
       
    });
    
-   
-
-   
-   
-//    $(this).on('click', '.addMem', function(){
-      
-//       var appendHtml = `<li class="select2-selection__choice" title="South Dakota" data-select2-id="select2-data-4-ado8">
-//       <button type="button" class="select2-selection__choice__remove" tabindex="-1" title="Remove item" aria-label="Remove item" aria-describedby="select2-we1r-container-choice-53o7-SD">
-//          <span aria-hidden="true">×</span>
-//       </button>
-//       <span class="select2-selection__choice__display" id="select2-we1r-container-choice-53o7-SD">\${$('.memText').val()}</span>
-//                   </li>`;
-      
-//       var inlineHtml = '<option value="SD" selected="" data-select2-id="select2-data-3-g5a8">' + $('.memText').val() +'</option>';
-      
-//       $('.mems').append(inlineHtml);
-//       $('.select2-selection__rendered').append(appendHtml);
-      
-//    });
    
    // group room create
    $(this).on('click','#makeRoom',function(){
@@ -538,15 +544,7 @@ $(function(){
            
         });
    }   
-   // 엔터키 이벤트 생성
-   function enterKey(event) {
-        if(msgBox.val().trim() == "") {
-            return false;
-        }
-        if (event.keyCode == 13) {
-            send();
-        }
-    }
+   
    function multiRecentMsg(){
       $.ajax({
          type : 'get',
@@ -616,52 +614,58 @@ $(function(){
       });   
    }
    
-   // 메시지를 websocket으로 보내고, db에도 넣는 function
+   // 채팅메시지가 있으면 보낸다.
+   msgBox.on('keyup', enterKey);
+   
+   // 엔터키 이벤트 생성
+   function enterKey(event) {
+        if(msgBox.val().trim() == "") { return false; }
+        if (event.keyCode == 13) { send(); }
+    }
+   
    function send() {
         let msg = msgBox.val();
-        var msgData = JSON.stringify({
-            chatSender : myId,
-            chatMsg : msg,
-            roomNo : roomNo
-        });
-        
         var today = new Date();   
-
         var hours = ('0' + today.getHours()).slice(-2); 
         var minutes = ('0' + today.getMinutes()).slice(-2);
         var seconds = ('0' + today.getSeconds()).slice(-2); 
-
         var timeString = hours + ':' + minutes  + ':' + seconds;
         
-        $.ajax({
-            type: 'post',
-            url: '/common/sendMsg',
-            data: msgData,
-            contentType: 'application/json; charset=utf-8',
-            success: function(res) {
-                  // JSON 형식으로 메시지를 전송
-               webSocket.send(JSON.stringify({ type: "chat", userId: myId , message: msg , date : timeString, senderRoom : res, myImage : myImage, userName : $('#userName').text() }));          
-               console.log('Message sent and stored.');
-            }
+        var msgData = JSON.stringify({
+            chatSender : myId,
+            chatMsg : msg,
+            roomNo : roomNo,
+            type: "chat",
+            message: msg , 
+            date : timeString, 
+            senderRoom : res, 
+            myImage : myImage, 
+            userName : $('#userName').text()
         });
+        
+        webSocket.send(msgData);
         msgBox.val('');
     }
-   
    
    let userData;
    function fMessage(event) {
       let data;    
+
         try {
+           console.log(event.data);
             data = JSON.parse(event.data); // JSON 형식으로 파싱
+            console.log('dataList ::: ' + JSON.stringify(data.list));
         } catch (error) {
-            console.error("Error parsing JSON:", error);
+            console.error("Error1 parsing JSON:", error);
             return; // 파싱 에러 발생 시 함수 종료
         }
+        
         
         if (data.type === "userList") {
          userData = data.list;
          sessionUser(userData);
          singleRecentMsg();
+         
         } else if (data.type === "chat") {
             // 일반 메시지 처리
             if(data.senderRoom === roomNo){
@@ -672,7 +676,9 @@ $(function(){
                       <h6 class="fs-2 text-muted">\${data.date}</h6>
                       <div class="p-2 bg-info-subtle text-dark rounded-1 d-inline-block fs-3">
                         \${data.message}
-                      </div></div></div>`;
+                      </div>
+                    </div>
+                  </div>`;
          } else {
             msgHtml = `<div class="hstack gap-3 align-items-start mb-7 justify-content-start">
                       <img src="\${data.myImage}\" alt="user" width="40" height="40" class="rounded-circle" />
@@ -682,25 +688,32 @@ $(function(){
                         </h6>
                         <div class="p-2 text-bg-light rounded-1 d-inline-block text-dark fs-3">
                           \${data.message}
-                        </div></div></div>`;
+                        </div>
+                      </div>
+                    </div>`;
          } 
-			chatBox.append(msgHtml);
-			$('.chat-box-inner.p-9').scrollTop($('.chat-box-inner.p-9')[0].scrollHeight);
-        }
-         
+           chatBox.append(msgHtml);
+         $('.chat-box-inner.p-9').scrollTop($('.chat-box-inner.p-9')[0].scrollHeight);
+            }
+            
+           
+
         } else if(data.type === "refresh") {
-			sessionUser(userData);
+           console.log('userData ::: ' + userData);
+         sessionUser(userData);
         } else if(data.type === "alarm") {
-			toastOn(data.userId);   
+           toastOn(data.userId);   
+
         } 
         
       //메시지 최신화
         if(roomType === "s"){
-			singleRecentMsg();
+           singleRecentMsg();
         } else if(roomType === "m"){
-			multiRecentMsg();
-        }
+             multiRecentMsg();
+          }
         
+//         c_chatWin.scrollTop(c_chatWin[0].scrollHeight);
     }
 
    function toastOn(res){
@@ -717,21 +730,21 @@ $(function(){
        },2000);
    }
    
-   function sessionUser(userData){
-      $.ajax({
-           url : '/common/sessionUser',
-           type : 'post',
-           data : JSON.stringify({
-              userList : userData,
-              sessionUserId : myId
-           }),
-           contentType : 'application/json; charset=utf-8',
-           success : function(res){
-              updateUserList(res.users);
-              updateUnUserList(res.unUsers);
-           }
-        });
-   }
+//    function sessionUser(userData){
+//       $.ajax({
+//            url : '/common/sessionUser',
+//            type : 'post',
+//            data : JSON.stringify({
+//               userList : userData,
+//               sessionUserId : myId
+//            }),
+//            contentType : 'application/json; charset=utf-8',
+//            success : function(res){
+//               updateUserList(res.users);
+//               updateUnUserList(res.unUsers);
+//            }
+//         });
+//    }
    
    // 유저 리스트 업데이트 함수(OnlineUser)
     function updateUserList(users) {
@@ -784,7 +797,6 @@ $(function(){
       });
       
         // 유저 리스트를 표시할 HTML 요소에 삽입
-        
         $('#unUserList').html(unUserListHtml);
         $('#unLiveUsers').html("("+unUsers.length+")");
     }
@@ -792,9 +804,10 @@ $(function(){
    function connect() {
         webSocket = new WebSocket("ws://192.168.36.61/ws-chat?userId=" + myId);
         
-        webSocket.onopen = function() {
-            console.log("WebSocket connection established");
+        webSocket.onopen = function(event) {
             singleRecentMsg();
+            updateUserList(event.users);
+            updateUnUserList(event.unUsers);
         };
 
         webSocket.onmessage = fMessage;
@@ -807,7 +820,7 @@ $(function(){
         
         webSocket.onclose = function(event) {
             console.log("WebSocket connection clo11sed:", event);
-            
+            userList();
         };
     }
    
