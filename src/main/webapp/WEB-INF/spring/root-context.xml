@@ -70,7 +70,7 @@
 		<property name="host" value="smtp.naver.com"/>
 	    <property name="port" value="465"/>
 	    <property name="username" value="seonye0ng"/>
-	    <property name="password" value="whaleporttest123"/>
+	    <property name="password" value="${mail.password}"/>
 	    <!-- 보안연결 SSL과 관련된 설정 -->
 	    <property name="javaMailProperties">
 		    <props>
